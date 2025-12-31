@@ -1,0 +1,25 @@
+---
+title: "Posts"
+number-sections: false
+anchor-sections: false
+---
+
+::: {.post-list}
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
+![](/assets/posts/gp.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Gaussian Process Regression
+<span class="post-date">December 31, 2025</span>
+Distributions over functions, kernel design, and uncertainty in regression.
+:::
+:::
+<a href="/posts/gp-regression/" class="post-card-link"></a>
+:::
+
+
+:::

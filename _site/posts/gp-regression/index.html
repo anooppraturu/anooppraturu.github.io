@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Anoop Praturu">
+<meta name="dcterms.date" content="2025-12-31">
+
+<title>Gaussian Process Regression – Not Entirely Unambiguous</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-ebc5daf1fa3b7c899c2e9cc0c663227c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Not Entirely Unambiguous</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Posts</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bayesian-parametric-regression" id="toc-bayesian-parametric-regression" class="nav-link active" data-scroll-target="#bayesian-parametric-regression"><span class="header-section-number">1</span> Bayesian Parametric Regression</a>
+  <ul class="collapse">
+  <li><a href="#sec-parametric-prediction" id="toc-sec-parametric-prediction" class="nav-link" data-scroll-target="#sec-parametric-prediction"><span class="header-section-number">1.1</span> What Really Happens When We Predict on a New Point?</a></li>
+  <li><a href="#what-really-happens-when-we-put-a-prior-on-theta" id="toc-what-really-happens-when-we-put-a-prior-on-theta" class="nav-link" data-scroll-target="#what-really-happens-when-we-put-a-prior-on-theta"><span class="header-section-number">1.2</span> What Really Happens When we Put a Prior on <span class="math inline">\(\theta\)</span>?</a></li>
+  </ul></li>
+  <li><a href="#gaussian-processes" id="toc-gaussian-processes" class="nav-link" data-scroll-target="#gaussian-processes"><span class="header-section-number">2</span> Gaussian Processes</a>
+  <ul class="collapse">
+  <li><a href="#radial-basis-function-kernel" id="toc-radial-basis-function-kernel" class="nav-link" data-scroll-target="#radial-basis-function-kernel"><span class="header-section-number">2.1</span> Radial Basis Function Kernel</a></li>
+  <li><a href="#white-noise-kernel" id="toc-white-noise-kernel" class="nav-link" data-scroll-target="#white-noise-kernel"><span class="header-section-number">2.2</span> White Noise Kernel</a></li>
+  <li><a href="#periodic-kernel" id="toc-periodic-kernel" class="nav-link" data-scroll-target="#periodic-kernel"><span class="header-section-number">2.3</span> Periodic Kernel</a></li>
+  </ul></li>
+  <li><a href="#gaussian-process-regression" id="toc-gaussian-process-regression" class="nav-link" data-scroll-target="#gaussian-process-regression"><span class="header-section-number">3</span> Gaussian Process Regression</a>
+  <ul class="collapse">
+  <li><a href="#posterior-calculation" id="toc-posterior-calculation" class="nav-link" data-scroll-target="#posterior-calculation"><span class="header-section-number">3.1</span> Posterior Calculation</a></li>
+  <li><a href="#miles-per-week" id="toc-miles-per-week" class="nav-link" data-scroll-target="#miles-per-week"><span class="header-section-number">3.2</span> Miles per Week</a></li>
+  <li><a href="#posterior-equations-in-detail" id="toc-posterior-equations-in-detail" class="nav-link" data-scroll-target="#posterior-equations-in-detail"><span class="header-section-number">3.3</span> Posterior Equations in Detail</a></li>
+  <li><a href="#the-price-of-non-parametrics" id="toc-the-price-of-non-parametrics" class="nav-link" data-scroll-target="#the-price-of-non-parametrics"><span class="header-section-number">3.4</span> The Price of Non-Parametrics</a></li>
+  </ul></li>
+  <li><a href="#hyperparameter-optimization" id="toc-hyperparameter-optimization" class="nav-link" data-scroll-target="#hyperparameter-optimization"><span class="header-section-number">4</span> Hyperparameter Optimization</a></li>
+  <li><a href="#co2-concentration-modeling" id="toc-co2-concentration-modeling" class="nav-link" data-scroll-target="#co2-concentration-modeling"><span class="header-section-number">5</span> Co2 Concentration Modeling</a></li>
+  <li><a href="#epilogue-inductive-bias" id="toc-epilogue-inductive-bias" class="nav-link" data-scroll-target="#epilogue-inductive-bias"><span class="header-section-number">6</span> Epilogue: Inductive Bias</a></li>
+  <li><a href="#appendices" id="toc-appendices" class="nav-link" data-scroll-target="#appendices"><span class="header-section-number">7</span> Appendices</a>
+  <ul class="collapse">
+  <li><a href="#sec-app-A" id="toc-sec-app-A" class="nav-link" data-scroll-target="#sec-app-A"><span class="header-section-number">7.1</span> Appendix A: Sums of Gaussian Variables</a></li>
+  <li><a href="#sec-app-B" id="toc-sec-app-B" class="nav-link" data-scroll-target="#sec-app-B"><span class="header-section-number">7.2</span> Appendix B: Posterior Calculation</a></li>
+  <li><a href="#sec-app-C" id="toc-sec-app-C" class="nav-link" data-scroll-target="#sec-app-C"><span class="header-section-number">7.3</span> Appendix C: Computing <span class="math inline">\(K_y^{-1}\)</span></a></li>
+  <li><a href="#sec-app-D" id="toc-sec-app-D" class="nav-link" data-scroll-target="#sec-app-D"><span class="header-section-number">7.4</span> Appendix D: Hyperparameter Loss Gradient</a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Gaussian Process Regression</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Anoop Praturu </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">December 31, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div id="bb546a22" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib <span class="im">as</span> mpl</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#The script GP.py can be found on my github: https://github.com/anooppraturu/gaussian_processes</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> GP</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>mpl.rcParams.update({</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"font.family"</span>: <span class="st">"serif"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"font.serif"</span>: [<span class="st">"Computer Modern Roman"</span>, <span class="st">"Times New Roman"</span>, <span class="st">"DejaVu Serif"</span>],</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mathtext.fontset"</span>: <span class="st">"cm"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">16</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">16</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p><em>Regression</em> is the art of taking <em>data</em>, and finding the <em>function</em> whence they came. Consider for example the dataset shown below plotting the number of miles I have run each week over the last few months. Denoting the week by <span class="math inline">\(x\)</span> and the number of miles ran by <span class="math inline">\(y\)</span>, we suppose that there is some function <span class="math inline">\(y=f(x)\)</span> that determines the relationship between these quantities, of which we only see a few samples from. This function could perhaps be a training plan that I am following for a race. Knowing this function can help you interpret data: if you find a good function it can tell you something deeper about the “true” relationship between the variables, like perhaps the specifics of my training plan. It can also help you make predictions: maybe a friend wants to see how busy I’ll be running next week before they reach out to make plans. If they have a good function they can predict how many miles I’ll run next week and decide not to hang out with me :( An example of one possible function is shown in the middle panel. This function is “perfect” in the sense that it reproduces each of our data points exactly. This is actually not so good, because our data is <strong>never</strong> perfect. For example the GPS on my phone that tracks my mileage on runs has a finite precision, so the numbers reported are not actually the number of miles I ran. Or maybe I got lazy one week and ran fewer miles than I should have for my training plan. Then the number of miles <span class="math inline">\(y\)</span> would be different than the number predicted by the “true” function <span class="math inline">\(f(x)\)</span>. To remedy this we usually assume that our data come from some function but are corrupted by noise: <span class="math inline">\(y = f(x) + \epsilon\)</span>, where <span class="math inline">\(\epsilon \sim \mathcal{N}(0, \sigma_n^2)\)</span> are i.i.d normally distributed noise, and the variance <span class="math inline">\(\sigma_n^2\)</span> is a hyperparameter determining the strength of this noise (the <span class="math inline">\(n\)</span> here stands for noise, to distinguish this from the plethora of other <span class="math inline">\(\sigma\)</span>’s that will arise). What this means in practice is that the function we seek doesn’t need to pass exactly through every data point, like the one shown on the right. Including noise is a good idea not only because it’s literally true, but we will see that it also has some appealing mathematical properties.</p>
+<div id="cell-fig-miles-ex" class="cell" data-fig-format="png" data-execution_count="2">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize dataset</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>miles <span class="op">=</span> torch.tensor([<span class="fl">6.97</span>, <span class="fl">0.0</span>, <span class="fl">1.32</span>, <span class="fl">10.86</span>, <span class="fl">10.57</span>, <span class="fl">4.26</span>, <span class="fl">9.70</span>, <span class="fl">10.41</span>, <span class="fl">12.71</span>, <span class="fl">19.11</span>, <span class="fl">23.84</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> torch.arange(<span class="bu">len</span>(miles), dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># test times</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>t_full <span class="op">=</span> torch.arange(<span class="dv">0</span>,<span class="fl">10.5</span>,<span class="fl">0.1</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 0 noise RBF example to interpolate the data</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>ex_RBF_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="op">-</span>torch.inf)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ex_RBF_GP.condition(t,miles)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>rbf_mu <span class="op">=</span> ex_RBF_GP.predict(t_full)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Linear model example that doesn't interpolate data</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>ex_lin_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        m<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        log_c<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="fl">0.0</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>ex_lin_GP.condition(t, miles)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>lin_mu <span class="op">=</span> ex_lin_GP.predict(t_full)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="fl">4.5</span>))</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].plot(t_full, rbf_mu, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].plot(t_full, lin_mu, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylabel(<span class="st">"Miles"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-miles-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-miles-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-miles-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1190" height="412">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-miles-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: <strong>Left:</strong> How many miles I ran per week over the last few months. <strong>Middle:</strong> One possible regressing function that perfectly interpolates the data. <strong>Right:</strong> Another possible function which doesn’t interpolate by allowing for noise.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Our task is particularly hard because there are <em>alot</em> of functions to choose from. In fact the space of all possible functions is infinite dimensional! A crude but intuitive way to see this is to consider the Taylor Series expansion of a function: <span class="math display">\[
+f(x) = \sum_{n=0}^\infty a_n x^n
+\]</span></p>
+<p>Each candidate function can then be characterized by its list of Taylor coefficients <span class="math inline">\(f \leftrightarrow (a_0, a_1, a_2, \ldots)\)</span>. This infinite list of numbers is like a vector in an infinite dimenisonal space. <em>Gaussian Process Regression</em> is a framework that provides just enough structure to allow us to make a foray into function space in our search for good functions. The central tool in this framework is something called a <em>Gaussian Process</em>, which is a natural generalization of the multivariate Gaussian distribution that we love so much. We’ll start by reviewing the standard approach to regression using <em>parametric models</em>, but we will focus on a few particular details in order to set the scene for <em>non-parametric models</em> like Gaussian process regression. Next we will use these motivating ideas to define Gaussian Processes, and subsequently see how to cast the problem of regression in this form. We will then spend some time building an intuition for what information the regression formulas encode, and end by applying these techniques to modeling atmospheric CO2 concentration.</p>
+<section id="bayesian-parametric-regression" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Bayesian Parametric Regression</h1>
+<p>One way to get a handle on function space is to <em>parameterize</em> a low dimensional subspace of it. For example <em>linear regression</em> considers functions with only the first 2 terms in the Taylor Series representation mentioned above <span class="math display">\[
+f_\theta(x) = ax + b
+\]</span></p>
+<p>The parameters <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> trace out a 2 dimensional space of functions. We denote the set of <span class="math inline">\(N\)</span> input data points by <span class="math inline">\(X\)</span> and their corresponding <span class="math inline">\(y\)</span> values by <span class="math inline">\(Y\)</span>, and let <span class="math inline">\(\theta\)</span> denote the set of all parameters in the model. The standard Bayesian approach is to use the Gaussian noise model for <span class="math inline">\(\epsilon\)</span> we mentioned above to write down the likelihood <span class="math inline">\(P(Y | \theta, X)\)</span> for the data, and then use Bayes theorem to write the posterior distribution for the parameters conditioned on the data: <span id="eq-bayes"><span class="math display">\[
+P(\theta | X, Y) = \frac{P(Y | \theta, X)P(\theta)}{P(Y | X)}
+\tag{1}\]</span></span></p>
+<p>This requires us to define a prior distribution <span class="math inline">\(P(\theta)\)</span> over the parameters, which we will have much more to say about in a moment. From here the typical approach would then be to find the parameter values which maximize their posterior <span class="math inline">\(\theta^* = \mathrm{argmax}_\theta P(\theta | X, Y)\)</span>, and take the function obtained by these parameters <span class="math inline">\(f_{\theta^*}(x)\)</span><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The purpose of reviewing this framework is to convey two key takeaways to help set the stage for Gaussian Process Regression.</p>
+<section id="sec-parametric-prediction" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="sec-parametric-prediction"><span class="header-section-number">1.1</span> What Really Happens When We Predict on a New Point?</h2>
+<p>Given a new input point <span class="math inline">\(x^*\)</span> we could obtain simply obtain <span class="math inline">\(y^* = f_{\theta^*}(x^*)\)</span> as our estimate by evaluating on the posterior maximizing function. A more principled approach would be to utilize the entire structure of the posterior, instead of just its maximum, because this allows us to compute <span class="math display">\[
+P(y^* | x^*, X, Y) = \int P(y^* | \theta, x^*) \, P(\theta | X, Y) \,d\theta \approx P(y^* | \theta^*, x^*) \, P(\theta^* | X, Y)
+\]</span></p>
+<p>The trick is that we can <em>approximate</em> the integral by its value at the maximum posterior, which is why we can simply use <span class="math inline">\(\theta^*\)</span> (this is rigorously justified as <span class="math inline">\(N\to\infty\)</span> using the <em>Saddle Point Approximation</em>). This maybe feels a bit circular, but the point is that the object we <em>really</em> care about is <span class="math inline">\(P(y^* | x^*, X, Y)\)</span>: given the pattern of data we have seen before, and the location of the new input, what do we think the new output could be? Our parametric model allows us to approximate this quantity by picking a single set of parameter values: <span class="math inline">\(\theta^*\)</span>. This means <strong>we can condition on the data without needing to look directly at it</strong>. We normally think about parameters as a tool for wrangling function space into a manageable form by making it low dimensional, but this is not all they do. The parameters <span class="math inline">\(\theta^*\)</span> act like convenient “buckets” for us to hold information about our data. By sacrificing full generality and restricting our functions to those accesible by our parameters, we are able to store a “summarized” version of our data in the values that the parameters take on. Gaussian Process Regression is a <em>non-parametric</em> model<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. In that case when we compute <span class="math inline">\(P(y^* | x^*, X, Y)\)</span>, we will not have convenient “buckets” for us to store information about our data in, and instead we will need to store and look at <strong>all</strong> of our data whenever we predict on a new point. This is the price we will pay for the fllexibility of not being constrained to a parametric subspace of function space.</p>
+</section>
+<section id="what-really-happens-when-we-put-a-prior-on-theta" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="what-really-happens-when-we-put-a-prior-on-theta"><span class="header-section-number">1.2</span> What Really Happens When we Put a Prior on <span class="math inline">\(\theta\)</span>?</h2>
+<p>Let’s suppose that we take mean 0 normal priors on both of the parameters of the linear model, so <span class="math inline">\(a\sim \mathcal{N}(0, \sigma_a^2)\)</span> and <span class="math inline">\(b\sim\mathcal{N}(0, \sigma_b^2)\)</span>. We can clearly think about this as a probability distribution over the 2D space of parameters we have chosen, but there’s a sense in which this is a probability distribution over <em>functions</em>: every sample from the distribution produces an entire function for us. For example, in the figure below on the left we show some functions obtained by sampling parameters from their priors. It looks like a random collection of functions which we have sampled from a “probability distribution over functions”.</p>
+<div id="cell-fig-lin-ex" class="cell" data-fig-format="png" data-message="false" data-execution_count="3">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Randomly sample parameters of linear function from priors </span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_random_lin_fn():</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> np.random.normal(size<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">lambda</span> x: a<span class="op">*</span>x <span class="op">+</span> b</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>xs <span class="op">=</span> torch.arange(<span class="op">-</span><span class="dv">2</span>,<span class="fl">2.1</span>,<span class="fl">0.1</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> gen_random_lin_fn()</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].plot(xs, f(xs), lw<span class="op">=</span><span class="dv">5</span>, alpha<span class="op">=</span><span class="fl">0.75</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>fn <span class="op">=</span> gen_random_lin_fn()</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].plot(xs, fn(xs), c<span class="op">=</span><span class="st">'#8da0cb'</span>, lw<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].scatter(xs, fn(xs), c<span class="op">=</span><span class="st">'#66c2a5'</span>, s<span class="op">=</span><span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-lin-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lin-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-lin-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1167" height="418">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lin-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: <strong>Left:</strong> Functions generated by sampling parameters from the prior on the linear regression model. <strong>Middle:</strong> Approximation of a function by evaluating it on a grid of points. <strong>Right:</strong> The same function in the continuum limit.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Can we formalize this intuition? Can we express this probability density not in terms of the parameters, but in terms of the functions themselves, and sample functions directly rather than sample them indirectly via their parameters? One way to make this precise is to think about “sampling a function” as sampling the values that the function takes on when evaluated on its domain. For example we could approximate a function by considering the vector <span class="math inline">\(\vec{f} = (f(x_1), f(x_2), \ldots, f(x_N))\)</span> evaluated at <span class="math inline">\(N\)</span> points <span class="math inline">\(x_i\)</span> evenly spaced between <span class="math inline">\(\left[-1, 1\right]\)</span>. As <span class="math inline">\(N\to\infty\)</span> the vector <span class="math inline">\(\vec{f} \to f(x)\)</span>, shown in the middle and right respectively of <a href="#fig-lin-ex" class="quarto-xref">Figure&nbsp;2</a>. We can then derive the “probability distribution over functions” by deriving the density for <span class="math inline">\(\vec{f}\)</span> from the prior over <span class="math inline">\(\theta\)</span>. To do this for the linear model, we note that <span class="math inline">\(\vec{f} = a\vec{x} + b\vec{1}\)</span> where <span class="math inline">\(\vec{x} = (x_1, x_2, \ldots x_N)\)</span> and <span class="math inline">\(\vec{1} = (1, 1, \ldots, 1)\)</span>. Since <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> are normally distributed and <span class="math inline">\(\vec{x}\)</span> and <span class="math inline">\(\vec{1}\)</span> are fixed, <span class="math inline">\(\vec{f}\)</span> is the sum of 2 vectors which are normally distributed in <span class="math inline">\(\mathbb{R}^N\)</span>. In the appendix <a href="#sec-app-A" class="quarto-xref">Section&nbsp;7.1</a> we show that the sum of 2 normally distributed vectors must also be normally distributed. A normal distribution is completely characterized by its mean and covariance matrix, so we can derive the probability density for <span class="math inline">\(\vec{f}\)</span> by directly computing the expecation values <span class="math inline">\(m_i \equiv \left&lt;f(x_i)\right&gt;\)</span> and <span class="math inline">\(K_{ij}\equiv\left&lt;(f(x_i) - m_i)(f(x_j)-m_j)\right&gt;\)</span> with respect to <span class="math inline">\(P(\theta)\)</span>. <span class="math display">\[
+m_i = \left&lt;a \right&gt;x_i + \left&lt;b \right&gt; = 0
+\]</span> Thus <span class="math display">\[
+K_{ij} = \left&lt;f(x_i) f(x_j) \right&gt; = \left&lt;a^2 x_i x_j \right&gt; + \left&lt;ab(x_i + x_j) \right&gt; + \left&lt;b^2\right&gt; = \sigma_a^2 x_i x_j + \sigma_b^2
+\]</span> Thus <span class="math inline">\(\vec{f}\)</span> is distributed as a multivariate normal in <span class="math inline">\(\mathbb{R}^N\)</span> with mean zero and covariance <span class="math inline">\(K_{ij}\equiv\sigma_a^2 x_i x_j + \sigma_b^2\)</span>. <span id="eq-lin-gp"><span class="math display">\[
+\vec{f} \sim \mathcal{N}(\vec{0}, K_{ij})
+\tag{2}\]</span></span> Let’s visualize a few of these samples below on the left:</p>
+<div id="cell-fig-lin-gp-ex" class="cell" data-fig-format="png" data-message="false" data-execution_count="4">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize GP with linear kernel</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>lin_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        m<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        log_c <span class="op">=</span> torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span> torch.tensor(<span class="fl">0.0</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="fl">0.0</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>,<span class="fl">4.5</span>))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    samp <span class="op">=</span> lin_GP.sample(xs)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].scatter(xs, samp, c<span class="op">=</span><span class="st">'#66c2a5'</span>, s<span class="op">=</span><span class="dv">75</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    xrand <span class="op">=</span> torch.tensor(np.random.uniform(<span class="op">-</span><span class="dv">2</span>,<span class="dv">2</span>,size<span class="op">=</span><span class="bu">len</span>(xs)))</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    samp <span class="op">=</span> lin_GP.sample(xrand)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">1</span>].scatter(xrand, samp, c<span class="op">=</span><span class="st">'#66c2a5'</span>, s<span class="op">=</span><span class="dv">75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-lin-gp-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lin-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-lin-gp-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="795" height="381">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lin-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: <strong>Left:</strong> Samples from our distribution over linear functions on an evenly spaced grid of points. <strong>Right:</strong> Samples from the same distribution for functions evaluated on a random sample of points.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>They look like the samples we got from sampling the parameters directly. Great! A few comments are in order:</p>
+<ul>
+<li>Our probability distribution <a href="#eq-lin-gp" class="quarto-xref">Equation&nbsp;2</a> makes <strong>no</strong> reference the the parameters <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>. It references the hyperparameters of their distributions <span class="math inline">\(\sigma_a\)</span> and <span class="math inline">\(\sigma_b\)</span>, which makes sense since the structure of <span class="math inline">\(P(\theta)\)</span> must determine <span class="math inline">\(P(\vec{f})\)</span>, but we are able to sample functions without any mention of the original parameters which defined these functions.</li>
+<li>We define the <em>kernel function</em> <span class="math inline">\(K(x, x') \equiv \sigma_a^2 x x' + \sigma_b^2\)</span> as the function which takes 2 input points and returns the covariance with respect to the prior <span class="math inline">\(\left&lt;f(x)f(x')\right&gt;\)</span> of the function evaluated at those two points. The kernel is doing the heavy lifting here. This is what defines our distribution, and encodes the fact that samples from it should be linear. As we get deeper into the subject, it will become apparent that the kernel is the star of the show.</li>
+<li>Nothing in our derivation depended on the points <span class="math inline">\(x_i\)</span> being evenly spaced. We could take <span class="math inline">\(x_i\)</span> to be randomly sampled and the resultant <span class="math inline">\(\vec{f}\)</span> would still look linear, as shown in <a href="#fig-lin-gp-ex" class="quarto-xref">Figure&nbsp;3</a> the right. We motivated using <span class="math inline">\(\vec{f}\)</span> as a proxy for <span class="math inline">\(f(x)\)</span> by saying we would take the limit as <span class="math inline">\(N\to\infty\)</span>. This would take us to the land of functional integrals which physicists love, but statisticians not so much. The statisticians instead define the distribution over functions by demanding that for <strong>any</strong> collection of points <span class="math inline">\(\vec{f}\sim\mathcal{N}(\vec{0}, K_{ij})\)</span> where the covariance is computed using the kernel on said collection of points.</li>
+<li>The original parametric model confines us to a 2D slice of function space, but the distribution in <a href="#eq-lin-gp" class="quarto-xref">Equation&nbsp;2</a> works on all of function space: the whole dang infinite dimensional thing! If you took a function with non-linearity it would simply have 0 density. A non-rigorous way to see this is to observe that <span class="math inline">\(K_{ij}\)</span> is rank 2 (it is the sum of 2 linearly independent rank 1 matrices) so <span class="math inline">\(K^{-1}\)</span> is only defined for vectors on the span of the columns of <span class="math inline">\(K_{ij}\)</span> which are linear functions. Non-linear functions are undefined under <span class="math inline">\(K^{-1}\)</span> and so have 0 density in the Gaussian. Don’t worry if that’s hard to follow, the point is that we have a proper infinite dimensional distribution, the fact that our samples are linear is encoded by the kernel.</li>
+<li>Despite being elevated to a distribution on function space, there is still a clear sense in which our distribution is Gaussian. Every time we look at a finite sample of function values, they obey Gaussian statistics.</li>
+</ul>
+<p>This, and the previous takeaway, may seem like rather odd perspectives on regression. The point is to show how seemingly foreign but central concepts from Gaussian process regression actually arise quite naturally from parametric regression. Let’s now turn to the real thing.</p>
+</section>
+</section>
+<section id="gaussian-processes" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Gaussian Processes</h1>
+<p>A <em>stochastic process</em> is a natural generalization of a random variable to describe random <em>functions</em> <span class="citation" data-cites="Kampen1992">(<a href="#ref-Kampen1992" role="doc-biblioref">Kampen 1992</a>)</span>. Each realization of a stochastic process is an entire function, rather than a single number or categorical label you would get from sampling a random variable. In the context of regression, the ability to describe and sample directly from distributions over functions would allow us to estimate our regressing function without needing to tie ourselves down to a parametric subspace of function space. That is why this approach to regression is sometime referred to a <em>non-parametric</em>. A <em>Gaussian Process</em> is precisely how normally distributed random variables generalize to a stochastic process. If you haven’t already guessed it, the distribution we derived above for linear regression is a gaussian process. We can generalize this to distributions over much broader classes of functions by choosing different kernels. We’ll present the formal definition, then parse the content after.</p>
+<div class="callout callout-style-simple callout-none no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>A <em>Gaussian Process</em> is a probability distribution over functions <span class="math inline">\(f(\vec{x})\in\mathbb{R}\)</span> defined on <span class="math inline">\(\mathbb{R}^D\)</span> characterized by a mean function <span class="math inline">\(m(\vec{x})\)</span> and <em>symmetric positive semi-definite</em> kernel function <span class="math inline">\(K(\vec{x}, \vec{x}')\)</span> with the defining property that for <em>every</em> collection of <span class="math inline">\(N\)</span> points <span class="math inline">\(X\)</span> the vector <span id="eq-gp-def"><span class="math display">\[
+(f(\vec{x}_1), f(\vec{x}_2), \ldots, f(\vec{x}_N)) \sim \mathcal{N}(m(X), K(X,X))
+\tag{3}\]</span></span> is normally distributed with mean <span class="math inline">\((m(\vec{x}_1), m(\vec{x}_2), \ldots, m(\vec{x}_N))\)</span> and covariance matrix <span class="math inline">\(K_{ij} = K(\vec{x}_i, \vec{x}_j)&gt;\)</span> for all <span class="math inline">\(N\)</span>. Formally, we write <span id="eq-gp-not"><span class="math display">\[
+f(\vec{x}) \sim \mathcal{GP}(m(\vec{x}), K(\vec{x}, \vec{x}'))
+\tag{4}\]</span></span></p>
+</div>
+</div>
+</div>
+<p>Here <span class="math inline">\(m(X)\)</span> is taken to mean <span class="math inline">\((m(\vec{x}_1), m(\vec{x}_2), \dots m(\vec{x}_N))\)</span>, and similarly for the matrix <span class="math inline">\(K(X, X)\)</span>. This definition should look familiar to our distribution <a href="#eq-lin-gp" class="quarto-xref">Equation&nbsp;2</a> over linear functions. We define the distribution over functions by the distribution over function values. There is again a clear sense in which this generalization is Gaussian: the statistics of any finite collection of function values is Gaussian. The Gaussian process defines fluctuations about a mean function <span class="math inline">\(m(x)\)</span>, and the correlations in the fluctuations are encoded in <span class="math inline">\(K(x,x')\)</span>. The kernel lays down structure for us to work with in function space, and completely determines what kind of functions we get when we sample from a GP. A kernel is symmetric positive semi-definite (PSD) if for any collection of <span class="math inline">\(N\)</span> vectors <span class="math inline">\(\vec{x}_i\in \mathbb{R}^D\)</span>, and any vector <span class="math inline">\(\vec{c}\in\mathbb{R}^N\)</span> we have <span class="math display">\[\begin{equation}
+\sum_{i,j=1}^N c_i c_j K(\vec{x}_i, \vec{x}_j) \geq 0
+\end{equation}\]</span> and <span class="math display">\[\begin{equation}
+K(\vec{x}_i, \vec{x}_j) = K(\vec{x}_j, \vec{x}_i) \;\; \forall i,j
+\end{equation}\]</span> This is encoding the fact that for any collection of points, the resultant <span class="math inline">\(K_{ij}\)</span> matrix formed by the kernel function must be a valid covariance matrix for a gaussian. I.e. it must be symmetric, and must have all positive eigenvalues. Let’s take a look at some kernels to get a sense for how all this works, and dip our toes into just how broad of a world Gaussian Processes open up for us.</p>
+<section id="radial-basis-function-kernel" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="radial-basis-function-kernel"><span class="header-section-number">2.1</span> Radial Basis Function Kernel</h2>
+<p><span class="math display">\[\begin{equation}
+K(\vec{x}_i, \vec{x}_j) = \sigma^2 \exp\left(-\frac{||\vec{x}_i - \vec{x}_j||^2}{2 l^2}\right)
+\end{equation}\]</span> This is sometimes also referred to as the “RBF”, “Squared Exponential” or, “Gaussian” kernel. This kernel has the ability to sample from the entire infinite dimensional function space, and thus is a very powerful workhorse in the GP literature. Notice how the correlation drops with distance between input points. This has a “smoothing effect” in which nearby points are more correlated with each other. The hyper-parameters <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(l\)</span> control the scale of fluctuations about the mean, and the lengthscale over which you expect your samples to sustain correlations, and hence remain “smooth” over (I know I made a big deal earlier about GPs being non-parametric, but these are “hyper”-parameters which serve a very different role and we will say more about later). You can see this behavior in the plots below, where we show samples from GPs with an RBF kernels with different scales and variances.</p>
+<div id="cell-fig-rbf-gp-ex" class="cell" data-fig-format="png" data-execution_count="5">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Intialize 3 RBF GPs with different hyperparameter settings</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>RBF_GP_1 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>RBF_GP_2 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">5.0</span>))</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>RBF_GP_3 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">2.5</span>)),</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="fl">4.5</span>))</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">'#66c2a5'</span>, <span class="st">'#fc8d62'</span>, <span class="st">'#8da0cb'</span>, <span class="st">'#e78ac3'</span>, <span class="st">'#a6d854'</span>]</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> torch.arange(<span class="dv">0</span>,<span class="dv">10</span>,<span class="fl">0.1</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> RBF_GP_1.sample(X)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> RBF_GP_2.sample(X)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">1</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> RBF_GP_3.sample(X)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">2</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$, $l=1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 5.0$, $l=1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$, $l=2.5$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-rbf-gp-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rbf-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-rbf-gp-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1174" height="407">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rbf-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Samples from a GP with an RBF kernel with various hyperparameter settings.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="white-noise-kernel" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="white-noise-kernel"><span class="header-section-number">2.2</span> White Noise Kernel</h2>
+<p><span class="math display">\[
+K(\vec{x}_i, \vec{x}_j) = \sigma^2 \delta_{ij}
+\]</span> The Kronecker delta here symbolically just means the identity matrix. This kernel has no “smoothing”: function values are entirely uncorrelated regardless of how close they are to each other. This is not particularly useful for regression, as it places no useful structure on function space, but is instructive to understand how kernel structure gives rise to different classes of functions.</p>
+<div id="cell-fig-delta-gp-ex" class="cell" data-fig-format="png" data-execution_count="6">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>white_GP_1 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.DeltaKernel(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>white_GP_2 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.DeltaKernel(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">5.0</span>))</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>,<span class="dv">5</span>))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> white_GP_1.sample(X)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> white_GP_2.sample(X)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 5.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-delta-gp-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-delta-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-delta-gp-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="802" height="441">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-delta-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: White noise samples from the delta function kernel GP.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="periodic-kernel" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="periodic-kernel"><span class="header-section-number">2.3</span> Periodic Kernel</h2>
+<p><span class="math display">\[
+K(\vec{x}_i, \vec{x}_j) = \sigma^2 \exp\left(- \frac{2}{l^2}\sin^2\left(\frac{||\vec{x}_i - \vec{x}_j||}{p}\right)\right)
+\]</span> Samples from this kernel are always periodic with period <span class="math inline">\(p\)</span>, and so is extremely useful for modeling data you know is periodic. (This kernel was derived by one of my personal heroes, the late David MacKay <span class="citation" data-cites="MacKayGP">(<a href="#ref-MacKayGP" role="doc-biblioref">MacKay 1998</a>)</span>). <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(l\)</span> play a similar role to that which they do in the RBF kernel, as you can see from the plots below.</p>
+<div id="cell-fig-per-gp-ex" class="cell" data-fig-format="png" data-execution_count="7">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>per_GP_1 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PeriodicKernel(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        log_p <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>per_GP_2 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PeriodicKernel(</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        log_p <span class="op">=</span> torch.log(torch.tensor(<span class="fl">3.0</span>))</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>per_GP_3 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PeriodicKernel(</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.log(torch.tensor(<span class="fl">2.5</span>)),</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        log_p <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> per_GP_1.sample(X)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> per_GP_2.sample(X)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">1</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> per_GP_3.sample(X)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">2</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$, $l=1.0$, $p=1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$, $l=1.0$, $p=3.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1.0$, $l=2.5$, $p=1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-per-gp-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-per-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-per-gp-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1174" height="444">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-per-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Samples from the periodic kernel under different hyperparameter settings.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>A useful fact about kernels which I will not prove here, is that sums of kernels are kernels, and products of kernels are kernels <span class="citation" data-cites="RKHS">(<a href="#ref-RKHS" role="doc-biblioref">Gretton 2019</a>)</span>. This means that existing kernels can be cobbled together to form exotic new kernels. For example we showed earlier that for linear models the kernel is given by <span class="math display">\[
+K_{lin}(\vec{x}_i, \vec{x}_j) = \sigma^2(\vec{x}_i\cdot\vec{x}_j + c)
+\]</span> with a slight redefinition of the hyperparameters. From this we can form the <em>Polynomial Kernel</em>: <span class="math display">\[
+K_{poly}(\vec{x}_i, \vec{x}_j) = \sigma^2(\vec{x}_i\cdot\vec{x}_j + c)^m
+\]</span> for integer <span class="math inline">\(m\)</span>. We know that this is a valid kernel because from the binomial expansion we can write this as a sum of powers of the linear kernel. Samples from this GP will generally produce degree <span class="math inline">\(m\)</span> polynomials, with <span class="math inline">\(\sigma^2\)</span> and <span class="math inline">\(c\)</span> controlling the polynomial weights and offset as seen below.</p>
+<div id="cell-fig-poly-gp-ex" class="cell" data-fig-format="png" data-execution_count="8">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>poly_GP_1 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        log_c<span class="op">=</span>torch.log(torch.tensor(<span class="fl">0.5</span>)),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1e-2</span>)),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> torch.tensor(<span class="dv">2</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>poly_GP_2 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        log_c<span class="op">=</span>torch.log(torch.tensor(<span class="fl">5.0</span>)),</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1e-2</span>)),</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> torch.tensor(<span class="dv">2</span>)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>poly_GP_3 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        log_c<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1e-3</span>)),</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> torch.tensor(<span class="dv">4</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> poly_GP_1.sample(X)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> poly_GP_2.sample(X)</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">1</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> poly_GP_3.sample(X)</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">2</span>].plot(X, y, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span>colors[i])</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_ylim([<span class="op">-</span><span class="dv">5</span>,<span class="dv">5</span>])</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1e-2$, $m=2$, $c=0.5$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1e-2$, $m=2$, $c=5.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_title(<span class="st">'$</span><span class="er">\</span><span class="st">sigma^2 = 1e-3$, $m=4$, $c=1.0$'</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-poly-gp-ex" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-poly-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-poly-gp-ex-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1174" height="444">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-poly-gp-ex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Degree 2 (<strong>Left</strong> and <strong>Middle</strong>) and degree 4 (<strong>Right</strong>) samples from the polynomial kernel.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The kernels presented above barely scratch the surface of what’s out there. A good place to start exploring possible kernels is the “Kernel Cookbook” <span class="citation" data-cites="cookbook">(<a href="#ref-cookbook" role="doc-biblioref">Duvenaud 2014</a>)</span>. Now that we formally know what a Gaussian Process is and have seen some real examples of them, let’s see how they can be used for regression.</p>
+</section>
+</section>
+<section id="gaussian-process-regression" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Gaussian Process Regression</h1>
+<p>Recalling our discussion in <a href="#sec-parametric-prediction" class="quarto-xref">Section&nbsp;1.1</a>, the goal of regression is to compute <span class="math inline">\(P(y^* | x^*, X, Y)\)</span>, where <span class="math inline">\((X, Y)\)</span> are the input-value pairs that make up our data, <span class="math inline">\(x^*\)</span> is the new input, and <span class="math inline">\(y^*\)</span> is the value of the regressing function evaluated at <span class="math inline">\(x^*\)</span>. Since our model is non-parametric we will have to compute this directly from the data. As before we will assume that the relationship between <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> is determined by some function, but our observations are corrupted by noise, so <span class="math display">\[
+y = f(x) + \epsilon, \;\; \epsilon \sim \mathcal{N}(0, \sigma_n^2)
+\]</span> In Gaussian process regression, we assume that the function <span class="math inline">\(f(x)\)</span> is drawn from a Gaussian Process: <span class="math display">\[
+f(x) \sim \mathcal{GP}(m(x), K(x, x'))
+\]</span> This defines our <em>prior</em> on <span class="math inline">\(f(x)\)</span> in the same way that we would specify priors on our parameters when doing MAP estimation, but since we do it with GPs we can access all of function space nonparametrically. Within this framework, our goal is to derive the posterior on <span class="math inline">\(f\)</span> from this GP prior, given the observed data and the specified noise model.</p>
+<section id="posterior-calculation" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="posterior-calculation"><span class="header-section-number">3.1</span> Posterior Calculation</h2>
+<p>To start, let’s generalize a bit and introduce some notation. Let <span class="math inline">\(X\)</span> denote the collection of <span class="math inline">\(N\)</span> training data points we have access to and <span class="math inline">\(X^*\)</span> the collection of <span class="math inline">\(M\)</span> test data points we would like to evaluate our regressing function on. As before we will take expressions like <span class="math inline">\(f(X)\)</span> to mean the length <span class="math inline">\(N\)</span> vector formed by evaluating <span class="math inline">\(f\)</span> on the <span class="math inline">\(N\)</span> elements of <span class="math inline">\(X\)</span>. Similarly, <span class="math inline">\(K(X, X)\)</span> would be an <span class="math inline">\(N\times N\)</span> matrix. Finally we will take <span class="math inline">\((f(X), f(X^*))\)</span> to mean the length <span class="math inline">\(M+N\)</span> vector formed by concatenating <span class="math inline">\(f(X)\)</span> and <span class="math inline">\(f(X^*)\)</span>, and similarly for matrices grouped in parentheses. To compute the conditional probability of <span class="math inline">\(y^*\)</span>, we will start by considering the joint distribution for <span class="math inline">\((f(X), f(X^*))\)</span> under the assumption that <span class="math inline">\(f\)</span> is drawn from a Gaussian Process<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>. By the definition of a GP we know this vector must have a normal distribution whose parameters are defined by the mean and kernel functions:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+f(X) \\
+f(X^*)
+\end{pmatrix}
+\sim \mathcal{N} \left(
+    \begin{pmatrix}
+m(X) \\
+m(X^*)
+\end{pmatrix},
+\begin{pmatrix}
+K(X, X)\;\; K(X, X^*)\\
+K(X^*, X)\;\; K(X^*, X^*)
+\end{pmatrix}
+    \right)
+\]</span> Recall however that we do not have direct access to <span class="math inline">\(f(X)\)</span>, but <span class="math inline">\(Y = f(X) + \epsilon\)</span> instead. Since <span class="math inline">\(\epsilon\)</span> is mean <span class="math inline">\(0\)</span> it has no effect on the mean of <span class="math inline">\((Y, f(X^*))\)</span> and we must simply compute its effect on the covariance. Denoting <span class="math inline">\(\hat{y_i}\equiv y_i - m(x_i)\)</span> and <span class="math inline">\(\hat{f}(x_j^*)\equiv f(x_j^*)-m(x_j^*)\)</span> we have <span class="math display">\[\begin{multline}
+\left&lt;\hat{y}_i\hat{y}_j\right&gt; = \left&lt;(\hat{f}(x_i) + \epsilon_i)(\hat{f}(x_j) + \epsilon_j)\right&gt; = \\ \left&lt;\hat{f}(x_i)\hat{f}(x_j)\right&gt; + \left&lt;\epsilon_i\right&gt;\left&lt;\hat{f}(x_j)\right&gt; + \left&lt;\epsilon_j\right&gt;\left&lt;\hat{f}(x_i)\right&gt; + \left&lt;\epsilon_i\epsilon_j\right&gt; = K(x_i, x_j) + \sigma_n^2 \delta_{ij}
+\end{multline}\]</span> where averages are taken over <span class="math inline">\(f\)</span> and <span class="math inline">\(\epsilon\)</span>, and we have used the fact that the <span class="math inline">\(\epsilon\)</span> are i.i.d. normally distributed with mean <span class="math inline">\(0\)</span> and variance <span class="math inline">\(\sigma_n^2\)</span>. Expanding <span class="math inline">\(\left&lt;\hat{y}_i\hat{f}(x_j)\right&gt;\)</span> in a similar fashion produces no term which is quadratic in <span class="math inline">\(\epsilon\)</span>, so the off diagonal blocks are unchanged, as is the lower right diagonal since it contains no <span class="math inline">\(y\)</span> terms. Thus we have <span id="eq-joint-dist"><span class="math display">\[
+\begin{pmatrix}
+Y \\
+f(X^*)
+\end{pmatrix}
+\sim \mathcal{N} \left(
+    \begin{pmatrix}
+m(X) \\
+m(X^*)
+\end{pmatrix},
+\begin{pmatrix}
+K(X, X) + \sigma_n^2 I\;\; K(X, X^*)\\
+K(X^*, X)\;\; K(X^*, X^*)
+\end{pmatrix}
+    \right)
+\tag{5}\]</span></span> where <span class="math inline">\(I\)</span> denotes the identity matrix. For simplicity we define the <span class="math inline">\(N\times N\)</span> matrix <span class="math inline">\(K_y\equiv K(X, X) + \sigma_n^2 I\)</span>. In theory we could compute the conditional distribution on <span class="math inline">\(f(X^*)\)</span> by fixing <span class="math inline">\(Y\)</span> to it’s observed values, then multiplying by a normalizing factor. Things are slightly simplified by the fact that the conditional distribution of a gaussian is gaussian, so if we can massage the density into a form that looks like <span class="math display">\[\begin{multline}
+-\ln P(f(X^*) | X, Y) = \frac{1}{2}(f(X^*) - \mu_*)^T \Sigma_*^{-1} (f(X^*) - \mu_*) \\
++ \mathrm{constant\; terms \;independent \;of \;}f(X^*)
+\end{multline}\]</span> We can read off the parameters <span class="math inline">\(\mu_*\)</span> and <span class="math inline">\(\Sigma_*\)</span> of the conditional distribution directly. The details of the calculation are quite cumbersome and we treat them in the appendix <a href="#sec-app-B" class="quarto-xref">Section&nbsp;7.2</a>, but the basic idea is to notice that the log density of the joint distribution has the general form <span class="math display">\[
+\frac{1}{2}f(X^*)^T A^{-1} f(X^*) + f(X^*)^T B^{-1} Y + \frac{1}{2}Y^T C^{-1} Y
+\]</span> Where <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span>, and <span class="math inline">\(C\)</span> correspond to the block components of the <span class="math inline">\(M+N\)</span> covariance matrix in <a href="#eq-joint-dist" class="quarto-xref">Equation&nbsp;5</a>, and can be inverted <a href="https://en.wikipedia.org/wiki/Schur_complement">using block matrix inversion</a>. If <span class="math inline">\(Y\)</span> is now a constant that we are conditioning on, this can be turned into a quadratic in <span class="math inline">\(f\)</span> by “<a href="https://en.wikipedia.org/wiki/Completing_the_square">completing the square</a>”. The calculation gives</p>
+<div class="callout callout-style-simple callout-none no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="math display">\[
+f(X^*) | X, Y, \theta \sim \mathcal{N}(\mu_*, \Sigma_*)
+\]</span> where <span class="math inline">\(\theta\)</span> denotes the collection of all noise and kernel hyperparameters and <span id="eq-gp-post-mean"><span class="math display">\[
+\mu_* = m(X^*) + K(X^*, X)\left[K(X, X) + \sigma_n^2 I\right]^{-1}(Y - m(X))
+\tag{6}\]</span></span> <span id="eq-gp-post-var"><span class="math display">\[
+\Sigma_* = K(X^*, X^*) - K(X^*, X)\left[K(X, X) + \sigma_n^2 I\right]^{-1}K(X, X^*)
+\tag{7}\]</span></span></p>
+</div>
+</div>
+</div>
+<p>The equations above are the entirety of what you need to do GP regression once you have chosen a kernel. One thing to note is how the noise variance <span class="math inline">\(\sigma_n^2\)</span> appears everytime a matrix is inverted. This stabilizes the inverse by putting a lower bound on the eigenvalues of <span class="math inline">\(K_y\)</span>, and is part of a deep connection between GP regression and kernel ridge regression. We’ll start by applying these formula to the miles per week dataset from the introduction, to get an intuitive feel for what these equations mean and how different kernels behave. Then we will break down the equations in detail and see if we can understand the mechanisms that produce this behavior.</p>
+<div id="cell-fig-miles-fit" class="cell" data-fig-format="png" data-execution_count="9">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> torch.arange(<span class="dv">0</span>,<span class="fl">15.1</span>,<span class="fl">0.1</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize RBF GP</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>run_RBF_GP_1 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        log_variance <span class="op">=</span> torch.log(torch.tensor(<span class="fl">2.5</span>)),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        log_lengthscale <span class="op">=</span> torch.log(torch.tensor(<span class="fl">0.5</span>))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="op">-</span>torch.inf)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Condition on train data to get parameters to compute posterior</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>run_RBF_GP_1.condition(t, miles)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Get posterior prediction on test data</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>mu_1, var_1 <span class="op">=</span> run_RBF_GP_1.predict(X_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>run_RBF_GP_2 <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.RBFKernel(</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        log_variance <span class="op">=</span> torch.log(torch.tensor(<span class="fl">10.0</span>)),</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        log_lengthscale <span class="op">=</span> torch.log(torch.tensor(<span class="fl">5.0</span>))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>run_RBF_GP_2.condition(t, miles)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>mu_2, var_2 <span class="op">=</span> run_RBF_GP_2.predict(X_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>run_poly_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>GP.PolynomialKernel(</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>        m<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        log_variance <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>)),</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        log_c <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.log(torch.tensor(<span class="fl">1.0</span>))</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>run_poly_GP.condition(t, miles)</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>mu_3, var_3 <span class="op">=</span> run_poly_GP.predict(X_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>, zorder<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].plot(X_test, mu_1, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].fill_between(X_test, mu_1 <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(torch.<span class="bu">abs</span>(var_1)), mu_1 <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(torch.<span class="bu">abs</span>(var_1)), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">'RBF: $</span><span class="er">\</span><span class="st">sigma^2_n = 0, </span><span class="er">\</span><span class="st">sigma^2 = 2.5, l=0.5$'</span>)<span class="op">;</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>, zorder<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].plot(X_test, mu_2, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].fill_between(X_test, mu_2 <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(var_2), mu_2 <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(var_2), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">'RBF: $</span><span class="er">\</span><span class="st">sigma^2_n = 1, </span><span class="er">\</span><span class="st">sigma^2 = 10, l=5$'</span>)<span class="op">;</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].scatter(t, miles, s<span class="op">=</span><span class="dv">75</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>, zorder<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].plot(X_test, mu_3, lw<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].fill_between(X_test, mu_3 <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(var_3), mu_3 <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(var_3), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_title(<span class="st">'Polynomial: $</span><span class="er">\</span><span class="st">sigma^2_n = 1, m=2, </span><span class="er">\</span><span class="st">sigma^2 = 1, c=1$'</span>)<span class="op">;</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylabel(<span class="st">"Miles"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">2</span>].set_xlabel(<span class="st">"Time (Weeks)"</span>, fontsize<span class="op">=</span><span class="dv">15</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-miles-fit" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-miles-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-miles-fit-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1192" height="465">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-miles-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: GP regression posterior fits on the running mileage dataset. <strong>Left:</strong> A model with 0 observational noise perfectly interpolates the data. <strong>Middle:</strong> Allowing for observational noise and a larger RBF lengthscale gives a smoother fit with more reasonable generalization properties. <strong>Right:</strong> Regression with a polynomial kernel generalizes the trend with low uncertainty.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="miles-per-week" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="miles-per-week"><span class="header-section-number">3.2</span> Miles per Week</h2>
+<p>When doing GP regression we treat <span class="math inline">\(\mu_*\)</span> as the best estimate for our regressing function, and use <span class="math inline">\(\Sigma_*\)</span> to tell us our uncertainty in that estimate at each point. In the first 2 plots of <a href="#fig-miles-fit" class="quarto-xref">Figure&nbsp;8</a> we show the results on our mileage dataset using an RBF kernel and <span class="math inline">\(m=0\)</span> mean. In purple we plot <span class="math inline">\(\mu_*\)</span>, and the pink bands show the 99 percent confidence band <span class="math inline">\(\pm3\Sigma_*\)</span>. Starting from the left, notice how when <span class="math inline">\(\sigma_n=0\)</span> we interpolate the data exactly and the model looks very overfit. (Strictly speaking interpolation is technically not synonymous with overfitting, but in practice zero-noise GPs with short lengthscales are a canonical example of overly flexible models) Also notice how the uncertainty is larger when further away from training data points. This is one of the great features of GP regression: we have <em>adaptive</em> uncertainty based on how far we are from the training data. Generalizing beyond the training data, the function quickly settles back to the prior mean. This is reasonable in the sense that the posterior has very little information when far away from the data, so it relies on the prior. It is bad in the sense that the regressed function doesn’t generalize the trend very well; the kernel we chose isn’t able to propagate information over long distances. In the middle we see a much more reasonable curve. The larger length scale in the kernel has a smoothing effect which damps the overfitting: the model is able to sustain correlations over a longer scale so the prediction at a given point is informed by more of the data, rather than just the training points nearby. Notice how even though the prior variance is higher, the uncertainty band is actually <em>smaller</em>. The uncertainty is also smooth near the data and slowly expands beyond the training data. This is a much more attractive form of adaptive uncertainty. The pattern on the left where uncertainty shrinks to <span class="math inline">\(0\)</span> on the training data and balloons rapidly away from it is a clear sign of overfitting. This function still regresses to the mean when far enough away from the training data and is unable to propagate the observed trend over large distances. On the right we show a regression with a polynomial kernel with <span class="math inline">\(m=2\)</span>. This model has all of the previously mentioned nice properties, but is also able to sustain the trend over long range. This comes at the price: the kernel forces us into a low dimensional subspace of quadratic polynomials that must carry their trends for long distances. What GP regression gets us above Bayesian parametric regression on a quadratic model is the adaptive uncertainty estimation.</p>
+</section>
+<section id="posterior-equations-in-detail" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="posterior-equations-in-detail"><span class="header-section-number">3.3</span> Posterior Equations in Detail</h2>
+<p>Let’s take a deep dive into the posterior equations, and see if we can begin to understand the mechanisms that produce the qualitative behavior we saw above. We’ll consider a simpler (but typical) case of a mean <span class="math inline">\(0\)</span> prior, and try to predict on a single point <span class="math inline">\(x^*\)</span>. Then <span class="math display">\[
+\mu_*(x^*) = K(x^*, X)K_y^{-1}Y, \;\;\;\; \Sigma_* = K(x^*, x^*) - K(x^*, X)K_y^{-1} K(X, x^*)
+\]</span> What happens when we evaluate on a training point, so <span class="math inline">\(x^* = x_i\)</span>, in the <span class="math inline">\(\sigma\to 0\)</span> limit? Then <span class="math inline">\(K_y^{-1} = K(X, X)^{-1}\)</span> so <span class="math display">\[
+\mu_*(x_i) = \sum_{j, k} K_{ij}K_{jk}^{-1}y_k = \sum_{k}\delta_{ik}y_k = y_i
+\]</span> and <span class="math display">\[
+[\Sigma_*]_{ii} = K_{ii} - \sum_{jk}K_{ij}K_{jk}^{-1}K_{ki} = 0
+\]</span> The regressing function exactly interpolates the training data with <span class="math inline">\(0\)</span> variance at those points, as we saw above. Nice. What’s happening when we evaluate on test points off the training data? We define <span class="math display">\[
+\alpha_i \equiv \sum_{j}[K_{y}^{-1}]_{ij} y_j
+\]</span> so that <span id="eq-kernel-machine"><span class="math display">\[
+\mu_*(x^*) = \sum_{i}\alpha_i K(x^*, x_i)
+\tag{8}\]</span></span> Each training point <span class="math inline">\(x_i\)</span> computes a value <span class="math inline">\(\alpha_i\)</span> that it thinks is the correct output. We then use the kernel to measure how similar the test point is to each training point, and then take a weighted average of the <span class="math inline">\(\alpha_i\)</span> over all training points. The posterior uses the kernel to smoothly blend together estimates from different training points to form a prediction. Points which are more similar to <span class="math inline">\(x^*\)</span> have their contribution weighted more highly, and vice-versa. Why take the <span class="math inline">\(\alpha_i\)</span> as each training point’s contribution instead of <span class="math inline">\(y_i\)</span>? <span class="math inline">\(y_i\)</span> is after all what the training point <span class="math inline">\(x_i\)</span> thinks the output is. The problem is that the <span class="math inline">\(y_i\)</span> can be strongly correlated with each other, as encoded by <span class="math inline">\(K_y\)</span>. What this means is that there is redundant information in the <span class="math inline">\(y_i\)</span>: if <span class="math inline">\(y_i\)</span> contains information about the value of <span class="math inline">\(y_j\)</span> and we try to use both for prediction then we will “double dip” and use overlapping information multipe times. <span class="math inline">\(\alpha_i\)</span> is a <em>precision weighted</em> version of <span class="math inline">\(y_i\)</span>: multiplying by <span class="math inline">\(K_y^{-1}\)</span> removes the redundancy in the <span class="math inline">\(y_i\)</span> so each <span class="math inline">\(\alpha_i\)</span> encodes the unique information carried by the output <span class="math inline">\(y_i\)</span>. This form also makes clear why our RBF kernel failed to generalize well: when the separation between <span class="math inline">\(x^*\)</span> and <span class="math inline">\(x_i\)</span> is <span class="math inline">\(\gg l\)</span>, <span class="math inline">\(K\to 0\)</span> for the RBF kernel and <span class="math inline">\(\mu_*\)</span> falls back on the mean. The kernel is unable to propagate information over large distances.</p>
+</section>
+<section id="the-price-of-non-parametrics" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="the-price-of-non-parametrics"><span class="header-section-number">3.4</span> The Price of Non-Parametrics</h2>
+<p>The form of <span class="math inline">\(\mu_*\)</span> presented above offers a vivid interpretation of GP regression, and highlights a key feature of non-parametric methods. When discussing parametric regression we noted how by sacrificing flexibility, the parameters of these models acted as convenient containers to store information about our training data so that we can efficiently condition on them when making new predictions. GP regression pays the opposite price for the opposite power: in exchange for full reign over function space we must touch <em>all</em> of our data when we make a prediction on a new point. This is explicitly clear in the sum in <a href="#eq-kernel-machine" class="quarto-xref">Equation&nbsp;8</a>. In practice if you have an extremely large dataset, as one often does in deep learning, then constructing the weights <span class="math inline">\(\alpha_i\)</span> requires an extremely large matrix inversion that may seem inpractical (we discuss how this is handled in practice in appendix <a href="#sec-app-C" class="quarto-xref">Section&nbsp;7.3</a>). It may also seem cumbersome to have to loop over the <em>entire</em> dataset everytime you run inference. And it is! It is important to keep in mind that there is no free lunch: the power and flexibility of GP regression comes at a price. If you have any experience with kernel machines the form of <a href="#eq-kernel-machine" class="quarto-xref">Equation&nbsp;8</a> may look familiar. GP regression with observational noise is in fact <em>exactly</em> kernel ridge regression.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+</section>
+</section>
+<section id="hyperparameter-optimization" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Hyperparameter Optimization</h1>
+<p>Even though that GPs are non-parametric, there are still a plethora of hyperparameters in our models. For example if we were using an RBF kernel we would need to specify <span class="math inline">\(l, \sigma^2\)</span> and the noise variance <span class="math inline">\(\sigma_n^2\)</span>. Despite the fact that we can do regression with <em>any</em> value for the hyperparameters, we saw earlier that the quality of the model can vary quite drastically depending on the ones we choose. Luckily we can fit for these hyperparameters similarly to how we approach standard parametric inference. The idea is that we should pick hyperparameters, which we collectively denote <span class="math inline">\(\theta\)</span>, that maximize the likelihood of the data: <span class="math inline">\(P(Y | X, \theta)\)</span>. From the definition of a GP we can easily write down the Gaussian density for this likelihood: <span id="eq-hp-lkl"><span class="math display">\[
+\mathcal{L}(\theta) \equiv \ln P(Y | X, \theta) = - \frac{1}{2}Y^T K_y^{-1} Y - \frac{1}{2} \ln |K_y| - \frac{N}{2}\ln(2\pi)
+\tag{9}\]</span></span> Tqhis quantity is known as the (log) marginal likelihood or model evidence. The first term encourages the hyperparameters to find a kernel that aligns with the observed data well. The second term acts like a complexity penalty which discourages kernels from overfitting the data by developing strong global correlations matched to the structure of the training data. (This second point is an incredibly deep concept in Bayesian inference and naturally generalizes beyond the Gaussian distribution. See chapter 2 of <span class="citation" data-cites="MacKaythesis">(<a href="#ref-MacKaythesis" role="doc-biblioref">MacKay 1992</a>)</span>) Modern autodiff software can optimize an expression like this just fine but the gradient is easily computed by hand: <span class="math display">\[
+\frac{\partial \mathcal{L}}{\partial \theta_j} = \frac{1}{2}\mathrm{Tr}\left[(\alpha\alpha^T - K_y^{-1})\frac{\partial K_y}{\partial \theta_j}\right], \;\; \alpha = K_y^{-1}y
+\]</span> Where <span class="math inline">\(\alpha=K_y^{-1}Y\)</span> as before. We go through this calculation step by step in the appendix <a href="#sec-app-D" class="quarto-xref">Section&nbsp;7.4</a>. We now have all the tools we need to do GP regression! Let’s take what we’ve learned and apply the whole pipeline to a non-trivial problem.</p>
+</section>
+<section id="co2-concentration-modeling" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Co2 Concentration Modeling</h1>
+<div id="333d6d3f" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># NOAA formatted CSV is not super straightforward to read in. Need to find first line where data starts and manually name columns</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"monthly_in_situ_co2_mlo.csv"</span>) <span class="im">as</span> f:</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    lines <span class="op">=</span> f.readlines()</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Find first data line (starts with a year)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> <span class="bu">next</span>(</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    i <span class="cf">for</span> i, line <span class="kw">in</span> <span class="bu">enumerate</span>(lines)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> line.strip().startswith(<span class="st">"19"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"monthly_in_situ_co2_mlo.csv"</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    skiprows<span class="op">=</span>start,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    names<span class="op">=</span>[</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"year"</span>, <span class="st">"month"</span>, <span class="st">"date_excel"</span>, <span class="st">"date_decimal"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"co2"</span>, <span class="st">"co2_seasonal"</span>, <span class="st">"co2_fit"</span>, <span class="st">"co2_fit_seasonal"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"co2_filled"</span>, <span class="st">"co2_filled_seasonal"</span>, <span class="st">"station"</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    na_values<span class="op">=</span>[<span class="op">-</span><span class="fl">99.99</span>]</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co"># mask out nan values and select numerical date and Co2 data.</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>mask <span class="op">=</span> df[<span class="st">"co2"</span>].notna()</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>co2_values <span class="op">=</span> df.loc[mask, [<span class="st">"date_decimal"</span>, <span class="st">"co2"</span>]]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co"># standardize input and output data to help with hyperparameter optimization</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.as_tensor(((co2_values[<span class="st">"date_decimal"</span>] <span class="op">-</span> co2_values[<span class="st">"date_decimal"</span>].mean())<span class="op">/</span>co2_values[<span class="st">"date_decimal"</span>].std()).values, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> torch.as_tensor((co2_values[<span class="st">'co2'</span>].values <span class="op">-</span> co2_values[<span class="st">'co2'</span>].mean())<span class="op">/</span>co2_values[<span class="st">'co2'</span>].std(), dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co"># test points to evaluate regression on</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>x_test <span class="op">=</span> torch.arange(<span class="op">-</span><span class="fl">1.7</span>, <span class="fl">3.0</span>, <span class="fl">0.0025</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>Since the mid 1950’s the Scripp’s institute has been measuring the <a href="https://scrippsco2.ucsd.edu/data/atmospheric_co2/primary_mlo_co2_record.html">atmospheric concetration of Co2</a> <span class="citation" data-cites="Keeling">(<a href="#ref-Keeling" role="doc-biblioref">Keeling et al. 2001</a>)</span> in PPM from the Mauna Loa observatory in Hawaii. This is the source of the following nightmare inducing plot:</p>
+<div id="cell-fig-noaa-data" class="cell" data-fig-format="png" data-execution_count="11">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ax.scatter(df[<span class="st">'date_decimal'</span>], df[<span class="st">'co2'</span>], s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Year"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"CO$_2$ (ppm)"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-noaa-data" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-noaa-data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-noaa-data-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1206" height="444">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-noaa-data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Carbon Dioxide concentration measurements taken from the Mauna Loa observatory.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The data display a plethora of overlapping complex behavior that make it an ideal test-bed for displaying the power and possible pitfalls of our new techniques. We start by standardizing the x (date) and y (Co2 ppm) data to have mean <span class="math inline">\(0\)</span> and unit variance in order to help the hyperparameter optimization. This will also allow us to reasonably choose a mean <span class="math inline">\(0\)</span> prior for all of our GPs. Our workflow is then:</p>
+<ul>
+<li>Choose a kernel <span class="math inline">\(K_\theta\)</span> with hyperparameters <span class="math inline">\(\theta\)</span>.</li>
+<li>Perform gradient descent on the log likelihood of the data with respect to the <span class="math inline">\(\theta\)</span> to obtain the best hyperparameters <span class="math inline">\(\theta^*\)</span>.</li>
+<li>Condition on the data and solve for the weights <span class="math inline">\(\alpha_i\)</span>.</li>
+<li>Use <span class="math inline">\(\alpha_i\)</span> and <span class="math inline">\(K_{\theta^*}\)</span> to predict the Co2 at future times.</li>
+</ul>
+<div id="bd773456" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Code for Initializing and training RBF and Polynomial GPs</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>RBF_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> GP.RBFKernel(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">1.0</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Hyperparameter Optimization</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>RBF_GP.fit(x, y)<span class="op">;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Condition posterior weights</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>RBF_GP.condition(x, y)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>poly_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> GP.PolynomialKernel(</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        log_c<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">1.0</span>),</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    log_noise<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>poly_GP.fit(x, y)<span class="op">;</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>poly_GP.condition(x, y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>Let’s start by trying this with the RBF kernel. Looking at the results below we see that the hyperparameter optimization produced the same desirable behavior we saw before in our mileage dataset. The kernel variance <span class="math inline">\(\sim 3\)</span> matches the overall spread of the data from the upward trend. <span class="math inline">\(l\sim1.8\)</span> is much larger than the seasonal variation period, and has the effect of smoothing out the curve and generalizing well. The robustness of this model is also supported by the low observational noise <span class="math inline">\(\sigma_n\)</span> and tight uncertainty bands for the fit near the training data. Unfortunately, once we move away from the train data on scales <span class="math inline">\(&gt; l\)</span> we see the posterior mean starts to revert to the mean, something that we have come to expect from the structure of the RBF. If we care about this trend persisting will the polynomial capture this better? Fitting this model does indeed look like it generalizes much better. The uncertainty also remains extremely low when we generalize beyond the training dataset. But we shouldn’t be so hasty as to say that the polynomial kernel is “better”. What if, perhaps, the world’s governments got their shit together and drastically limited carbon emissions? Modeling can’t account for things like this, so often the best we can do is be honest about our uncertainty when we try to generalize far away from what we’ve learned. In that sense the RBF model is perhaps better: it’s at least more honest about the fact that once we are far away from the data we shouldn’t trust our predictions anymore, and it even learns through <span class="math inline">\(l\)</span> what constitutes “far away”.</p>
+<div id="cell-fig-co2-init-fit" class="cell" data-fig-format="png" data-execution_count="13">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">10</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>rbf_mu, rbf_var <span class="op">=</span> RBF_GP.predict(x_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].scatter(x, y, s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].plot(x_test, rbf_mu, lw<span class="op">=</span><span class="dv">1</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].fill_between(x_test, rbf_mu <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(rbf_var), rbf_mu <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(rbf_var), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_xlabel(<span class="st">"Standardized Time"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_ylabel(<span class="st">"Standardized CO$_2$ PPM"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">"RBF Kernel: $</span><span class="er">\</span><span class="st">sigma^2 = 3.02, l=1.78, </span><span class="er">\</span><span class="st">sigma_n^2 = 4.4e-3$"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>poly_mu, poly_var <span class="op">=</span> poly_GP.predict(x_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].scatter(x, y, s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].plot(x_test, poly_mu, lw<span class="op">=</span><span class="dv">1</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].fill_between(x_test, poly_mu <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(poly_var), poly_mu <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(poly_var), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_xlabel(<span class="st">"Standardized Time"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_ylabel(<span class="st">"Standardized CO$_2$ PPM"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">"Polynomial Kernel: $m=2, </span><span class="er">\</span><span class="st">sigma^2 = 0.18, c=1.0, </span><span class="er">\</span><span class="st">sigma_n^2 = 4.7e-3$"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-co2-init-fit" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-co2-init-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-co2-init-fit-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1428" height="947">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-co2-init-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: <strong>Top:</strong> GP regression with the RBF kernel after hyperparameter optimization. <strong>Bottom:</strong> Regression with the <span class="math inline">\(m=2\)</span> polynomial kernel
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Can we go further, and try to model the oscillatory behavior? This seems like a perfect use case for our periodic kernel. Lets try a polynomial + periodic kernel, so we can capture the trend + oscillations on top of it.</p>
+<div id="cell-fig-per-poly-fit" class="cell" data-fig-format="png" data-execution_count="14">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Periodic + Polynomial GP</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>per_poly_kernel <span class="op">=</span> GP.SumKernel(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    GP.PeriodicKernel(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        log_lengthscale<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">5.0</span>),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        log_p<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    GP.PolynomialKernel(</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        log_c <span class="op">=</span> torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>        m<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>per_poly_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> per_poly_kernel, </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>per_poly_GP.fit(x, y)<span class="op">;</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>per_poly_GP.condition(x, y)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>pp_mu, pp_var <span class="op">=</span> per_poly_GP.predict(x_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>ax.scatter(x, y, s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>ax.plot(x_test, pp_mu, lw<span class="op">=</span><span class="dv">1</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>ax.fill_between(x_test, pp_mu <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(pp_var), pp_mu <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(pp_var), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Standardized Time"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Standardized CO$_2$ PPM"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Periodic + Polynomial Kernel"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-per-poly-fit" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-per-poly-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-per-poly-fit-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1428" height="469">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-per-poly-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: GP regression with the periodic + polynomial kernel fails to reproduce oscillatory behavior.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>No oscillations! What went wrong? The hyperparameter optimization pushed the variance of the periodic kernel down to <span class="math inline">\(\sim 0.02\)</span>, it has almost no effect on the fit. Let’s <em>detrend</em> the data, and subtract the polynomial kernel fit from the data in order to isolate the oscillatory part we are trying to model and understand what went wrong.</p>
+<div id="cell-fig-detrend" class="cell" data-fig-format="png" data-execution_count="15">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>y_detrended <span class="op">=</span> y <span class="op">-</span> poly_GP.predict(x, return_cov<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="fl">3.5</span>))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>ax.scatter(x, y_detrended, s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ax.plot(x, y_detrended, lw<span class="op">=</span><span class="dv">1</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Standardized Time"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Detrended CO$_2$"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-detrend" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-detrend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-detrend-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1428" height="325">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-detrend-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: Co2 data after subtracting off the upward trend fitted from the polynomial kernel regression. Qausi-periodic behavior explains why the periodic + polynomial kernel alone fails to display osciallations.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>A closer inspection reveals that our data is not <em>quite</em> periodic. Even though the period of the fluctuation is extremely stable, the amplitude and mean of the fluctuations vary over the scale of decades. The problem is that the periodic kernel produces samples that are <em>exactly</em> periodic. Even the best fit sample from the periodic kernel GP will be poorly fit in multiple regions because it cannot capture these non-periodic variations. This exposes a general weakness of additive kernels in hyperparameter optimization: one of the kernels can always “opt out” by sending its variance to <span class="math inline">\(0\)</span>. In our case the periodic kernel will always induce some penalty due to it’s strict periodicity constraints, so the optimizer sends it to <span class="math inline">\(0\)</span> and lets the polynomial kernel do the heavy lifting. Is there any way we can salvage this situation? We need a way to allow for variations in the periodic kernel that are informed by the local structure of the data. One way to accomplish this is to multiply the periodic kernel by an RBF kernel, so our total kernel is <span class="math display">\[\begin{equation*}
+K = K_{poly} + K_{RBF}\times K_{periodic}
+\end{equation*}\]</span></p>
+<div id="2247e75a" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># RBF*Periodic + Polynomial Kernel</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>full_kernel <span class="op">=</span> GP.SumKernel(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    GP.ProductKernel(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        GP.PeriodicKernel(</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>            log_lengthscale<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>            log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>            log_p<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        GP.RBFKernel(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>            log_lengthscale<span class="op">=</span>torch.tensor(<span class="op">-</span><span class="fl">2.0</span>),</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>            log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    GP.PolynomialKernel(</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        log_c <span class="op">=</span> torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        log_variance<span class="op">=</span>torch.tensor(<span class="fl">0.0</span>),</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>        m<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>full_GP <span class="op">=</span> GP.GaussianProcess(</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> full_kernel, </span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    log_noise <span class="op">=</span> torch.tensor(<span class="op">-</span><span class="fl">2.0</span>)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>full_GP.fit(x, y)<span class="op">;</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>full_GP.condition(x, y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The results below are quite promising. As we generalize the model sustains fluctuations for a few seasonal cycles before settling down to the smooth polynomial trend. This makes sense: far enough away we don’t have the confidence to predict the seasonal fluctuations accurately and so we should fall back on a more conservative estimate with higher uncertainty. The kernel lengthscale parameters automatically quantify “far enough away” for us. Notice as well how the uncertainty estimate lies somewhere between the overly large RBF estimates and overly tight polynomial estimates. In addition to the intuitive motivation for this kernel that I gave above, I’ll touch on 2 slightly more rigorous explanations for why multiplying by the RBF kernel worked. Feel free to skip these if you’re happy with where things stand now</p>
+<ul>
+<li>Spectral perspective: In Fourier space the periodic kernel consists of delta function spikes at the harmonics of <span class="math inline">\(1/p\)</span>, while the RBF kernel is a gaussian envelope. Multiplying the kernels corresponds to a convolution of their fourier transforms: the gaussian envelope of the RBF kernel widens the spikes of the periodic kernel. This allows the kernel to access functions which are not <em>exactly</em> periodic, since the fourier transform now has support off the <span class="math inline">\(1/p\)</span> harmonics.</li>
+<li>Complexity perspective: As we mentioned before, the <span class="math inline">\(-\ln |K|\)</span> term in the hyperparameter optimization loss acts like a complexity penalty that prevents overfitting by discouraging functions with strong global correlations. The problem with the periodic kernel is that it naturally possesses strong correlations between points separated by multiples of the period. This means that the complexity term is highly costly for the periodic kernel, and must be compensated for by a near perfect fit from the data term in the likelihood. Multiplying by the RBF kernel relaxes these global constraints by allowing the kernel to break periodicity and decorrelate itself over long distances. Despite allowing for more <em>expressive</em> functions, they are less <em>complex</em> as measured by the complexity of constraints imposed by global correlations in the kernel.</li>
+</ul>
+<div id="cell-fig-per-poly-rbf-fit" class="cell" data-fig-format="png" data-execution_count="17">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">15</span>,<span class="dv">5</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ff_mu, ff_var <span class="op">=</span> full_GP.predict(x_test, return_cov<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>ax.scatter(x, y, s<span class="op">=</span><span class="fl">2.5</span>, c<span class="op">=</span><span class="st">'#66c2a5'</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>ax.plot(x_test, ff_mu, lw<span class="op">=</span><span class="dv">1</span>, c<span class="op">=</span><span class="st">'#8da0cb'</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>ax.fill_between(x_test, ff_mu <span class="op">-</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(ff_var), ff_mu <span class="op">+</span> <span class="dv">3</span><span class="op">*</span>torch.sqrt(ff_var), color<span class="op">=</span><span class="st">'#e78ac3'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Standardized Time"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Standardized CO$_2$ PPM"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Periodic $</span><span class="er">\</span><span class="st">cdot$ RBF + Polynomial"</span>, fontsize<span class="op">=</span><span class="fl">17.5</span>)<span class="op">;</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-per-poly-rbf-fit" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-per-poly-rbf-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-per-poly-rbf-fit-output-1.png" class="quarto-figure quarto-figure-center figure-img" width="1428" height="468">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-per-poly-rbf-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Modulating the periodic kernel by the RBF kernel gives the expressive capability to capture seasonal variations.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="epilogue-inductive-bias" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Epilogue: Inductive Bias</h1>
+<p><em>Inductive bias</em> is the human element of machine learning. Whenever we model something, we make must make assumptions about the structure of the solutions that we seek. This encodes our implicit beliefs about the problem and determines how our model will generalize beyond the training set. This is explicitly evident in parametric inference. We assume that the solution lies within the parametric subspace of function space that we specified, and our model’s ability to generalize depends entirely on the degree to which the test data adheres to this subspace. While Gaussian processes allow us to break free from these parametric constraints and embrace the entirety of function space, they do <strong>not</strong> free us from inductive bias. For GP regression the <em>kernel</em> encodes our inductive bias. Instead of constraining ourselves to a specific class of functions, we encode our prior belief about our solution by specifying the structure of the <em>correlations</em> in the solution. Choosing a good kernel requires a series of principled scientific assumptions about our problem and a good understanding of how information should be transmitted by the data we have access to. We saw this in full force in our climate problem. The composition of our kernel was directly informed by the specific behavior we were trying to capture. Another aspect of our climate problem was that the kernels we chose often did <em>not</em> produce the behavior we intended by choosing them. This reminds me of a crucial piece of advice I got as an amateur musician: “buying a nice guitar wont automatically make you a better guitarist”. I think this is something that generalizes broadly to any endeavour: <strong>Powerful tools are only powerful in hands that know how to use them</strong>. The power that GPs endow us with via their flexibility only translate to real results if we understand how to use them. This dovetails nicely with the piece of advice I recieved immediately after the last: “there’s no substitute for practice”. After hyperparameter optimization there is no science to kernel composition (though people have come up with interesting approaches to this <span class="citation" data-cites="DKL">(<a href="#ref-DKL" role="doc-biblioref">Wilson et al. 2015</a>)</span>), and there is no substitute for practice. The only way to build an intuitive feel for how kernels behave and what sort of functions you can produce from them is to get your hands dirty and start using them.</p>
+</section>
+<section id="appendices" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Appendices</h1>
+<section id="sec-app-A" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="sec-app-A"><span class="header-section-number">7.1</span> Appendix A: Sums of Gaussian Variables</h2>
+<p>Here we show if <span class="math inline">\(\vec{x}_1 \sim \mathcal{N}(\vec{\mu}_1, \Sigma_1)\)</span> and <span class="math inline">\(\vec{x}_2 \sim \mathcal{N}(\vec{\mu}_2, \Sigma_2)\)</span>, then the random variable <span class="math inline">\(\vec{z} = \vec{x}_1 + \vec{x}_2 \in \mathbb{R}^d\)</span> is also normally distributed. We will rely on the fact that any affine transformation of a gaussian variable is still gaussian: for <span class="math inline">\(\vec{x}\sim\mathcal{N}(\vec{\mu}, \Sigma)\)</span>, then <span class="math inline">\(A\vec{x} + b\sim\mathcal{N}(A\vec{\mu} + b, A\Sigma A^T)\)</span> for any matrix <span class="math inline">\(A\)</span>. This follows from the fact that if you transform a random variable, its density gets multiplied by the jacobian determinant of the transform. For an affine transformation the jacobian is independent of the variable itself so the density simply gets rescaled and preserves it’s functional Gaussian form. Consider the stacked vector <span class="math display">\[
+\vec{w} =
+\begin{pmatrix}
+\vec{x}_1 \\
+\vec{x}_2
+\end{pmatrix}
+\sim \mathcal{N} \left(
+    \begin{pmatrix}
+\mu_1 \\
+\mu_2
+\end{pmatrix},
+\begin{pmatrix}
+\Sigma_1\;\; 0\\
+0\;\; \Sigma_2
+\end{pmatrix}
+    \right)
+\]</span> Then for <span class="math inline">\(A = \left[I_d, I_d\right] \in \mathbb{R}^{d\times 2d}\)</span>, we have <span class="math inline">\(\vec{z} = A \vec{w}\)</span>. Applying <span class="math inline">\(A\)</span> to the stacked mean and covariance vectors and matrices gives: <span class="math display">\[
+\vec{z} \sim \mathcal{N}(\vec{\mu}_1 + \vec{\mu}_2, \Sigma_1 + \Sigma_2)
+\]</span></p>
+</section>
+<section id="sec-app-B" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="sec-app-B"><span class="header-section-number">7.2</span> Appendix B: Posterior Calculation</h2>
+<p>We will complete the derivation assuming <span class="math inline">\(m=0\)</span>, the results for non-zero <span class="math inline">\(m\)</span> carry through the same calculation straightforwardly. Starting from <a href="#eq-joint-dist" class="quarto-xref">Equation&nbsp;5</a> we introduce some notation: <span class="math inline">\(A \equiv K_y,\;\)</span> <span class="math inline">\(B \equiv K(X, X^*),\;\)</span> and <span class="math inline">\(C\equiv K(X^*, X^*)\)</span>. Then the covariance matrix is given by <span class="math display">\[
+\Sigma =
+\begin{pmatrix}
+A\;\;\;\; B\\
+B^T\;\; C
+\end{pmatrix}
+\]</span> Since <span class="math inline">\(\Sigma\)</span> is a block matrix we can apply the <a href="https://en.wikipedia.org/wiki/Schur_complement">Schur complement formula</a> to invert it. Defining <span class="math inline">\(S = C - B^T A^{-1} B\)</span> then the inverse is <span class="math display">\[
+\Sigma^{-1} =
+\left(
+\begin{array}{c c}
+A^{-1} + A^{-1} B S^{-1} B^T A^{-1}
+&amp;
+- A^{-1} B S^{-1}
+\\[0.8ex]
+- S^{-1} B^T A^{-1}
+&amp;
+S^{-1}
+\end{array}
+\right)
+\]</span> From this we can write the terms in the exponential of the density as <span class="math display">\[
+\frac{1}{2}
+\begin{pmatrix}
+Y \\
+f(X^*)
+\end{pmatrix}^T
+\Sigma^{-1}
+\begin{pmatrix}
+Y \\
+f(X^*)
+\end{pmatrix} = -\frac{1}{2}\left(f(X^*)^T S^{-1} f(X^*) - 2f(X^*)^T S^{-1} B^T A^{-1} y + \ldots\right)
+\]</span> Where the dots denote terms independent of <span class="math inline">\(f(X^*)\)</span>. We can form the conditional for <span class="math inline">\(f(X^*)\)</span> by completing the square in <span class="math inline">\(f(X^*)\)</span>: <span class="math display">\[
+(f(X^*) - B^TA^{-1}Y)^T S^{-1}(f(X^*) - B^TA^{-1}Y) - Y^T A^{-1}BS^{-1}B^TA^{-1}Y
+\]</span> From this we can read off the conditional variance as <span class="math inline">\(S\)</span> and mean as <span class="math inline">\(B^T A^{-1} Y\)</span>. Plugging in the definitions of <span class="math inline">\(S, A, B, C\)</span> and re-inserting the mean <span class="math inline">\(m\)</span> gives <span class="math display">\[\begin{align*}
+\mu_* = m(X^*) + K(X^*, X)\left[K(X, X) + \sigma_n^2 I\right]^{-1}(Y - m(X)) \\
+\Sigma_* = K(X^*, X^*) - K(X^*, X)\left[K(X, X) + \sigma_n^2 I\right]^{-1}K(X, X^*)
+\end{align*}\]</span> as we stated in the text.</p>
+</section>
+<section id="sec-app-C" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="sec-app-C"><span class="header-section-number">7.3</span> Appendix C: Computing <span class="math inline">\(K_y^{-1}\)</span></h2>
+<p>In our posterior equations and hyperparameter optimization there are multiple points where we have to compute expressions of the form: <span class="math display">\[
+K_y^{-1} M = \alpha
+\]</span> where M could be a matrix or vector. A related problem occurs in the hyperparameter optimization loss function where we have to compute <span class="math inline">\(|K_y|\)</span>. The positive semi-definite property of the kernel function means that in theory the matrix <span class="math inline">\(K_y\)</span> is always invertible, but in practice the inverse matrix is usually numerically unstable due to floating point precision, especially in the presence of small eigenvalues. We instead make use of the fact that <span class="math inline">\(K_y\)</span> is PSD so it admits a <em>Cholesky Decomposition</em>: <span class="math display">\[
+K_y = L L^T
+\]</span> Where <span class="math inline">\(L\)</span> is a unique lower triangular that is guaranteed to exist. Solving for <span class="math inline">\(L\)</span> is <span class="math inline">\(O(n^3)\)</span>, which is the same cost as inverting <span class="math inline">\(K_y\)</span> directly, but is significantly more numerically stable. Once we have solved for <span class="math inline">\(L\)</span> we can solve equations like <span class="math inline">\(\alpha = K_y^{-1}M\)</span> without ever actually forming <span class="math inline">\(K_y^{-1}\)</span> by instead solving linear systems of equations, which itself is also much more stable. In detail, we first solve <span class="math display">\[
+L z = M
+\]</span> followed by <span class="math display">\[
+L^T \alpha = z
+\]</span> each of these solves is <span class="math inline">\(O(n^2)\)</span> due to the lower triangular structure of <span class="math inline">\(L\)</span>. A further property we exploit is that the Cholesky factors allow for an efficient computation of the determinant of <span class="math inline">\(K_y\)</span>: <span class="math display">\[
+\ln |K_y| = 2\sum_{i} \ln L_{ii}
+\]</span> All inverse and determinant calculations done when solving for the posterior means, covariances, or hyperparameter loss functions are done according to this framework. In particular, the gradient of the hyperparameter loss must also be computed in the same manner, but if you use auto-diff software such as torch you must take care to construct the loss function with the Cholesky decomposition so that the gradients backpropagate through <span class="math inline">\(L\)</span> property.</p>
+</section>
+<section id="sec-app-D" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="sec-app-D"><span class="header-section-number">7.4</span> Appendix D: Hyperparameter Loss Gradient</h2>
+<p>Starting from <a href="#eq-hp-lkl" class="quarto-xref">Equation&nbsp;9</a>, we let <span class="math inline">\(\theta\)</span> denote the set of all hyperparameters including the noise variance <span class="math inline">\(\sigma^2_n\)</span>: <span class="math display">\[
+\mathcal{L}(\theta) = -\frac{1}{2}Y^T K_y^{-1}Y - \frac{1}{2} \ln |K_y|
+\]</span> We will compute the gradient of each term separately. In order to take the derivative of <span class="math inline">\(K_y^{-1}\)</span> we note that <span class="math inline">\(\mathbb{I} = K_y^{-1}K_y\)</span>, and the derivative of <span class="math inline">\(\mathbb{I}\)</span> is 0 so <span class="math display">\[
+0 = \frac{\partial K_y^{-1}}{\partial \theta_i}K_y + K_y^{-1}\frac{\partial K_y}{\partial \theta_i} \implies \frac{\partial K_y^{-1}}{\partial \theta_i} = - K_y^{-1}\frac{\partial K_y}{\partial \theta_i} K_y^{-1}
+\]</span> So the derivative of the first term gives <span class="math display">\[
+\frac{1}{2}Y^T K_y^{-1}\frac{\partial K_y}{\partial \theta_i} K_y^{-1} Y = \frac{1}{2}\alpha^T\frac{\partial K_y}{\partial \theta_i}\alpha
+\]</span> Where we have defined <span class="math inline">\(\alpha\equiv K_y^{-1} Y\)</span> and made use of the fact the <span class="math inline">\(K_y^{-1}\)</span> is symmetric. For the second term we denote the eigenvalues of <span class="math inline">\(K_y\)</span> by <span class="math inline">\(\lambda_i\)</span>, so <span class="math display">\[
+|K_y| = \prod_i \lambda_i = e^{\sum_i \ln \lambda_i} = e^{\mathrm{Tr} \ln K_y}
+\]</span> Since the log of a diagonalized matrix is just the log of its elements. Thus <span class="math display">\[
+\frac{\partial \ln |K_y|}{\partial \theta_i} = \mathrm{Tr} \left(K_y^{-1}\frac{\partial K_y}{\partial \theta_i}\right)
+\]</span> At this point we could the terms for the derivative together, but we can massage the first term into the form of a trace. For arbitrary matrix <span class="math inline">\(A\)</span> we have <span class="math display">\[
+\alpha^T A \alpha = \sum_{ij}\alpha_i A_{ij}\alpha_j = \sum_j \left(\sum_i \alpha_j \alpha_i A_{ij}\right) = \sum_j (\alpha\alpha^T A)_{jj} = \mathrm{Tr}(\alpha\alpha^T A)
+\]</span> This allows us to combine both derivative terms into a single trace: <span class="math display">\[
+\frac{\partial\mathcal{L}}{\partial \theta_i} = \frac{1}{2}\mathrm{Tr}\left[\left(\alpha\alpha^T - K_y^{-1}\right)\frac{\partial K_y^{-1}}{\partial \theta_i}\right]
+\]</span></p>
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-cookbook" class="csl-entry" role="listitem">
+Duvenaud, David. 2014. <span>“The Kernel Cookbook: Advice on Covariance Functions.”</span> <a href="https://www.cs.toronto.edu/~duvenaud/cookbook/">https://www.cs.toronto.edu/~duvenaud/cookbook/</a>.
+</div>
+<div id="ref-RKHS" class="csl-entry" role="listitem">
+Gretton, Arthur. 2019. <span>“Introduction to RKHS, and Some Simple Kernel Algorithms.”</span> <a href="https://www.gatsby.ucl.ac.uk/~gretton/coursefiles/lecture4_introToRKHS.pdf">https://www.gatsby.ucl.ac.uk/~gretton/coursefiles/lecture4_introToRKHS.pdf</a>.
+</div>
+<div id="ref-Kampen1992" class="csl-entry" role="listitem">
+Kampen, N. G. van. 1992. <em><span>S</span>tochastic <span>P</span>rocesses in <span>P</span>hysics and <span>C</span>hemistry</em>. Elsevier Science Publishers, Amsterdam.
+</div>
+<div id="ref-Keeling" class="csl-entry" role="listitem">
+Keeling, C. D., S. C. Piper, R. B. Bacastow, M. Wahlen, T. P. Whorf, M. Heimann, and H. A. Meijer. 2001. <span>“Exchanges of Atmospheric CO2 and 13CO2 with the Terrestrial Biosphere and Oceans from 1978 to 2000. I. Global Aspects.”</span> SIO Reference Series, No. 01-06. San Diego: Scripps Institution of Oceanography.
+</div>
+<div id="ref-MacKaythesis" class="csl-entry" role="listitem">
+MacKay, David. 1992. <em>Bayesian Methods for Adaptive Models</em>. California Institute of Technology.
+</div>
+<div id="ref-MacKayGP" class="csl-entry" role="listitem">
+———. 1998. <span>“Introduction to Gaussian Processes.”</span> <em>NATO ASI Series F Computer and Systems Sciences</em> 168: 133–66.
+</div>
+<div id="ref-DKL" class="csl-entry" role="listitem">
+Wilson, Andrew Gordon, Zhiting Hu, Ruslan Salakhutdinov, and Eric P. Xing. 2015. <span>“Deep Kernel Learning.”</span> <a href="https://arxiv.org/abs/1511.02222">https://arxiv.org/abs/1511.02222</a>.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>I am assuming you have seen this line of reasoning before and so am glossing over the <a href="https://en.wikipedia.org/wiki/Bayesian_linear_regression">details</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Strictly speaking, non-parametric models don’t have <em>no</em> parameters, but rather the number of parameters grows with the amount of data we have.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>This calculation may not look very “Bayesian” in the sense that we never use a formula like <a href="#eq-bayes" class="quarto-xref">Equation&nbsp;1</a> to obtain the posterior. The calculation <em>can</em> in fact be done in this manner, but requires some heavy machinery from the world of <em>Reproducing Kernel Hilbert Spaces</em>. In order not to open up this can of worms here we opt for the more direct but less Bayesian looking approach.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>To treat the fascinating connection between GP regression and kernel machines in a manner that would satisfy me would explode the length of this already long post. It is a subject that I hope to return to in a future post so stay tuned!<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

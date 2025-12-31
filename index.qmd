@@ -1,0 +1,42 @@
+---
+title: "Not Entirely Unambiguous"
+number-sections: false
+anchor-sections: false
+---
+
+<div class="site-subtitle">
+A blog at the convex hull of ML, Physics, and Bayesian Inference.
+</div>
+
+Hi - I'm Anoop. 
+
+I'm an AI researcher at [Unlearn.ai](https://www.unlearn.ai/) with a background in Physics. I'm broadly interested in Bayesian Inference, Statistical Physics, and Interpretability. This site is a collection of technical notes and essays on topics that interest me. I hope they interest you too!
+
+---
+### Recent Posts
+
+::: {.post-list}
+
+::: {.post-card}
+::: {.columns}
+
+::: {.column width="20%"}
+![](/assets/posts/gp.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Gaussian Process Regression
+<span class="post-date">December 31, 2025</span>
+
+Distributions over functions, kernel design, and uncertainty in regression.
+:::
+
+:::
+
+<a href="/posts/gp-regression/" class="post-card-link"></a>
+
+:::
+
+:::
+
+[View all posts →](/posts/)

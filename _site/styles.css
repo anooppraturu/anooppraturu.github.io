@@ -1,0 +1,147 @@
+/* css styles */
+body {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.quarto-title {
+  margin-bottom: 1.5rem;
+}
+
+figure {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Force Quarto-rendered figure images to fit the text column */
+.quarto-figure img.figure-img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+body {
+  background-color: #faf8f5;
+  color: #333;
+}
+
+h1 {
+  color: #16382d;
+}
+
+h2, h3, h4, h5, h6 {
+  color: #234f3a;
+}
+
+/* Subtle forest green accents for callouts */
+.callout {
+  border-left-color: #234f3a;
+}
+
+.callout-note {
+  border-left-color: #234f3a;
+}
+
+.callout-tip {
+  border-left-color: #2e5d47;
+}
+
+.callout-warning {
+  border-left-color: #5a3e2b; /* warm brown-green for contrast */
+}
+
+/* Posts list layout */
+.post-list {
+  margin-top: 2rem;
+}
+
+.post-entry {
+  margin-bottom: 2.5rem;
+}
+
+/* Circular post icons */
+.post-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Tighten spacing under post titles */
+.post-entry h3 {
+  margin-top: 0;
+  margin-bottom: 0.3rem;
+}
+
+/* =========================
+   Post cards (Posts index)
+   ========================= */
+
+.post-card {
+  position: relative;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background-color: rgba(35, 79, 58, 0.03);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-card-link {
+  position: absolute;
+  inset: 0;
+  display: block;
+  z-index: 10;
+}
+
+.post-card:hover {
+  background-color: rgba(35, 79, 58, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.post-card h4 {
+  margin-top: 0;
+  margin-bottom: 0.4rem;
+  color: #234f3a;
+}
+
+.post-card p {
+  margin: 0;
+}
+
+.post-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Post date (between title and description) */
+.post-date {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+/* =========================
+   Fix appendix background (Flatly)
+   ========================= */
+
+/* Override Bootstrap "default" background on appendix */
+#quarto-appendix.default {
+  background-color: #faf8f5 !important;
+}
+
+/* Ensure inner sections don't reintroduce backgrounds */
+#quarto-appendix.default section {
+  background-color: transparent !important;
+}
+
+/* Home page subtitle */
+.site-subtitle {
+  margin-top: -2.0rem;
+  margin-bottom: 2.5rem;
+  font-size: 1.1rem;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.6);
+}
