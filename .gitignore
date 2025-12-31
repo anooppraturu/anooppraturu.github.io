@@ -1,2 +1,29 @@
-/_site/
-/.quarto/
+# --------------------
+# Quarto build artifacts
+# --------------------
+_site/
+.quarto/
+site_libs/
+
+# --------------------
+# Rendered HTML (Quarto outputs)
+# --------------------
+*.html
+
+# --------------------
+# Python
+# --------------------
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.venv/
+venv/
+
+# --------------------
+# OS / editor noise
+# --------------------
+.DS_Store
+.ipynb_checkpoints/
+.vscode/
+
