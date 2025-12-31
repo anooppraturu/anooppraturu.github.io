@@ -3,6 +3,7 @@
 # --------------------
 _site/
 .quarto/
+.quarto/_freeze/
 site_libs/
 
 # --------------------
