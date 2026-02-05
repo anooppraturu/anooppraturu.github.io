@@ -67,8 +67,10 @@ G_{ij} \equiv \left<s_i s_j\right>_c = \left<s_i s_j\right> - \left<s_i\right>\l
 $$ {#eq-corr-def}
 Correlations are inherently driven by interactions. If the magnetization fluctuates at a site $i$ it will "polarize" its neighbors to fluctuate in the same direction, and this effect will propagate through the system. This is the first sign that the correlation function may be difficult to handle in mean field theory, which seeks to eschew interactions. $G_{ij}$ arises from the free energy as (dropping $\left\{s\right\}$ subscripts for clarity)
 $$
+\begin{align}
 G_{ij} = \frac{1}{Z} \mathrm{Tr}\left[s_is_je^{-\beta H}\right] - \frac{1}{Z^2}\mathrm{Tr}\left[s_ie^{-\beta H}\right]\mathrm{Tr}\left[s_je^{-\beta H}\right] = \frac{\beta^{-2}}{Z}\frac{\partial^2 Z}{\partial h_i \partial h_j} - \frac{\beta^{-2}}{Z^2}\frac{\partial Z}{\partial h_i}\frac{\partial Z}{\partial h_j} \\
 \beta^{-2}\left[\frac{1}{Z}\frac{\partial^2 Z}{\partial h_i \partial h_j} + \frac{\partial}{\partial h_j}\left(\frac{1}{Z}\right)\frac{\partial Z}{\partial h_i}\right] = \beta^{-2}\frac{\partial^2 \ln Z}{\partial h_j \partial h_i} = -\beta^{-1}\frac{\partial^2 F}{\partial h_j \partial h_i}
+\end{align}
 $$
 A closely related concept is the local susceptibility
 $$
