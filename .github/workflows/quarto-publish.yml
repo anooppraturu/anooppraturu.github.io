@@ -22,14 +22,15 @@ jobs:
           tinytex: true
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5q
         with:
           python-version: "3.11"
+          cache: "pip"
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas matplotlib torch
+          python -m pip install jupyter ipykernel pyyaml numpy pandas matplotlib torch
 
       - name: Render site
         run: quarto render
