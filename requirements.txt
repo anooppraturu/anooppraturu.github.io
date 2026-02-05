@@ -1,0 +1,7 @@
+jupyter
+ipykernel
+pyyaml
+numpy
+pandas
+matplotlib
+torch
