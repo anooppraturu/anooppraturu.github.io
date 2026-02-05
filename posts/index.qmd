@@ -9,6 +9,21 @@ anchor-sections: false
 ::: {.post-card}
 ::: {.columns}
 ::: {.column width="20%"}
+![](/assets/posts/mft.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### The Many Faces of Mean Field Theory
+<span class="post-date">February 4, 2026</span>
+Variational principles, field theory, and the physics of the Ising Model.
+:::
+:::
+<a href="/posts/faces_of_mft/" class="post-card-link"></a>
+:::
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
 ![](/assets/posts/gp.jpg){.post-icon}
 :::
 

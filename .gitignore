@@ -25,3 +25,6 @@ __pycache__/
 .vscode/
 .ipynb_checkpoints/
 
+
+/.quarto/
+**/*.quarto_ipynb
