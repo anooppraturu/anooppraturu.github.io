@@ -3,7 +3,7 @@ title: "About"
 ---
 ::: {.columns}
 ::: {.column width="30%"}
-![](assets/headshot.JPG){width=200px style="border-radius: 50%; display: block; margin: auto;"}
+![](assets/headshot.jpeg){width=200px style="border-radius: 50%; display: block; margin: auto;"}
 :::
 
 ::: {.column width="70%"}
