@@ -9,6 +9,23 @@ anchor-sections: false
 ::: {.post-card}
 ::: {.columns}
 ::: {.column width="20%"}
+![](/assets/posts/bp.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Backpropagation
+<span class="post-date">April 11, 2026</span>
+The first post in the "Notebook of Things I Don't Know About". A simple rederivation and NumPy implementation of the Backpropagation algorithm for feedforward networks.
+:::
+:::
+<a href="/posts/backprop/" class="post-card-link"></a>
+:::
+
+::: {.post-list}
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
 ![](/assets/posts/mft.jpg){.post-icon}
 :::
 
