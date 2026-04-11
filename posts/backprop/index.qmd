@@ -369,15 +369,21 @@ y = a\cos(bx) + x\sin(cx) - d\,\text{tanh}(e x)
 $$
 with `a, b, c, d, e = [ 0.19677237,  0.75164323,  1.1048082 ,  1.61985818, -0.37817787]` sampled randomly from a normal and frozen. Our data consists of $x$ points from $-5$ to $5$ with an even spacing of $0.05$ and the associated $y$ points. Let's start with a simple network with one hidden layer with a width of `10`. We optimized for `50000` steps with a learning rate of `0.001`. Training dynamics are visualized below:
 
+::: {.content-visible when-format="html"}
 ![Training a network with one hidden layer of width $10$ for $50000$ steps with a learning rate of $\eta=10^{-3}$](assets/l1_training.gif){#fig-l1-train}
+:::
 
 On the left we see how the network approximation to the function contorts itself towards the true function over time, and on the right we see the loss curve smoothly decrease as expected. Let's now try a deeper network with 2 hidden layers and widths of `10` each, so `model = FeedForward(widths = [1, 10, 10, 1])`.
 
+::: {.content-visible when-format="html"}
 ![Network with two hidden layers of width $10$ trained for $50000$ steps with a learning rate of $\eta=10^{-3}$](assets/l2_training.gif){#fig-l2-train}
+:::
 
 The network output moves more quickly towards the true function and is able to approximate the function much more closely. Do we get more gains from training deeper? Lets try a network with 5 hidden layers with widths of `10`:
 
+::: {.content-visible when-format="html"}
 ![Network with 5 hidden layers of width $10$ trained for $50000$ steps with a learning rate of $\eta=10^{-3}$](assets/l5_training.gif){#fig-l2-small}
+:::
 
 Despite having more parameters and more depth, things don't look quite as good here. The network forms a few odd kinks and settles down to the solution more slowly. It seems that the supposed gains from larger, deeper networks are not so straightforward to obtain.
 
