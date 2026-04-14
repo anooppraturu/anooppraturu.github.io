@@ -26,7 +26,7 @@ I'm an AI researcher at [Unlearn.ai](https://www.unlearn.ai/) with a background 
 
 ::: {.column width="80%"}
 #### Backpropagation
-<span class="post-date">February 4, 2026</span>
+<span class="post-date">April 11, 2026</span>
 
 The first post in the "Notebook of Things I Don't Know About". A simple rederivation and NumPy implementation of the Backpropagation algorithm for feedforward networks.
 :::
