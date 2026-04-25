@@ -64,6 +64,8 @@ h2, h3, h4, h5, h6 {
   height: 90px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
+  transform: scale(1.1);
 }
 
 /* Tighten spacing under post titles */
