@@ -63,10 +63,10 @@ and compute the gradient of this approximation to the full loss to perform gradi
 
 ::: {.callout}
 $$
-\begin{align}
+\begin{aligned}
 g_{\mathcal{B}}(\theta)\equiv \frac{1}{B}\sum_{i\in\mathcal{B}} \nabla_\theta \ell_i(\theta) \\
 \theta_{t+1} = \theta_t - \eta g_{\mathcal{B}}(\theta_t)
-\end{align}
+\end{aligned}
 $$ {#eq-SGD}
 :::
 
@@ -198,11 +198,11 @@ where $p$ is the momentum of the particle. Loss functions are typically derived 
 
 ::: {.callout}
 $$
-\begin{align}
+\begin{aligned}
 g_t = \nabla_\theta L_{\mathcal{B}}(\theta_t) \\
 p_{t} = \beta p_{t-1} - \eta_t g_t  \\
 \theta_{t+1} = \theta_t + p_t
-\end{align}
+\end{aligned}
 $$ {#eq-momentum}
 :::
 
@@ -264,11 +264,11 @@ Root Mean Square Propagation (RMSProp) is the simplest way to incorporate the se
 
 ::: {.callout}
 $$
-\begin{align}
+\begin{aligned}
 g_t = \nabla_\theta L_{\mathcal{B}}(\theta_t) \\
 s_t = \beta s_{t-1} + (1-\beta)g_t^2 \\
 \theta_{t+1} = \theta_t - \eta_t \frac{g_t}{\sqrt{s_t} + \epsilon}
-\end{align}
+\end{aligned}
 $$ {#eq-rms-prop}
 :::
 
@@ -280,13 +280,13 @@ The Adam optimizer (as its known) is the state of the art in modern deep learnin
 
 ::: {.callout}
 $$
-\begin{align}
+\begin{aligned}
 g_t = \nabla_\theta L_{\mathcal{B}}(\theta_t) \\
 m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t \\
 v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2 \\
 \hat{m}_t = \frac{m_t}{1-\beta_1^t}, \;\;\;\; \hat{v}_t = \frac{v_t}{1-\beta_2^t} \\
 \theta_{t+1} = \theta_t - \eta_t \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
-\end{align}
+\end{aligned}
 $$ {#eq-rms-prop}
 :::
 
