@@ -19,6 +19,22 @@ I'm an AI researcher at [Unlearn.ai](https://www.unlearn.ai/) with a background 
 
 ::: {.post-card}
 ::: {.columns}
+::: {.column width="20%"}
+![](/assets/posts/opt.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Optimizers
+<span class="post-date">April 24, 2026</span>
+Stochastic Gradient Descent, Momentum, RMSProp, and Adam. How to use gradients.
+:::
+:::
+<a href="/posts/optimizers/" class="post-card-link"></a>
+:::
+
+::: {.post-card}
+::: {.columns}
+
 
 ::: {.column width="20%"}
 ![](/assets/posts/bp.jpg){.post-icon}
@@ -57,25 +73,6 @@ Variational principles, field theory, and the physics of the Ising Model.
 
 :::
 
-::: {.post-card}
-::: {.columns}
-
-::: {.column width="20%"}
-![](/assets/posts/gp.jpg){.post-icon}
-:::
-
-::: {.column width="80%"}
-#### Gaussian Process Regression
-<span class="post-date">December 31, 2025</span>
-
-Distributions over functions, kernel design, and uncertainty in regression.
-:::
-
-:::
-
-<a href="/posts/gp-regression/" class="post-card-link"></a>
-
-:::
 
 :::
 

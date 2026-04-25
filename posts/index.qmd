@@ -9,6 +9,21 @@ anchor-sections: false
 ::: {.post-card}
 ::: {.columns}
 ::: {.column width="20%"}
+![](/assets/posts/opt.jpg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Optimizers
+<span class="post-date">April 24, 2026</span>
+Stochastic Gradient Descent, Momentum, RMSProp, and Adam. How to use gradients.
+:::
+:::
+<a href="/posts/optimizers/" class="post-card-link"></a>
+:::
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
 ![](/assets/posts/bp.jpg){.post-icon}
 :::
 
@@ -21,7 +36,6 @@ The first post in the "Notebook of Things I Don't Know About". A simple rederiva
 <a href="/posts/backprop/" class="post-card-link"></a>
 :::
 
-::: {.post-list}
 
 ::: {.post-card}
 ::: {.columns}
@@ -37,6 +51,7 @@ Variational principles, field theory, and the physics of the Ising Model.
 :::
 <a href="/posts/faces_of_mft/" class="post-card-link"></a>
 :::
+
 
 ::: {.post-card}
 ::: {.columns}
