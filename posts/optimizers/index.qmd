@@ -74,7 +74,7 @@ where $\eta$ is the learning rate, and the discrete time index $t$ denotes how m
 $$
 g_{\mathcal{B}}(\theta) = \nabla_\theta L + \xi_{\mathcal{B}}
 $$
-where $\xi_{\mathcal{B}} = g_{\mathcal{B}}(\theta) - \nabla_\theta L$ is the difference between the batch and true gradient and acts as a noisy fluctuation on the true gradient. $g_{\mathcal{B}}$ is an "unbiased estimator" of the true gradient in the sense that $\mathbb{E}[\xi_\mathcal{B}] = 0$, where the average is taken with respect to batches. This is the basic idea: using $g_{\mathcal{B}}$ for our gradient descent is much more efficient and should on average produce similar results to $\nabla_\theta L$.
+where $\xi_{\mathcal{B}} = g_{\mathcal{B}}(\theta) - \nabla_\theta L$ is the difference between the batch and true gradient and acts as a noisy fluctuation on the true gradient. $g_{\mathcal{B}}$ is an "unbiased estimator" of the true gradient in the sense that $\mathbb{E}[\xi_{\mathcal{B}}] = 0$, where the average is taken with respect to batches. This is the basic idea: using $g_{\mathcal{B}}$ for our gradient descent is much more efficient and should on average produce similar results to $\nabla_\theta L$.
 
 SGD requires one final modification. Since the gradients are noisy the training dynamics will never converge to a fixed minimum but instead approach an equilibrium distribution where the model parameters "jitter" around the loss landscape. One way to see this is to write down the equations for _Simulated Annealing_:
 $$
