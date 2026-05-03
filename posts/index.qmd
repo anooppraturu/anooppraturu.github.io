@@ -9,6 +9,21 @@ anchor-sections: false
 ::: {.post-card}
 ::: {.columns}
 ::: {.column width="20%"}
+![](/assets/posts/reg.jpeg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Regularization
+<span class="post-date">May 3, 2026</span>
+Data Augmentation, Weight Decay, Dropout, Label Smoothing, and Early Stopping.
+:::
+:::
+<a href="/posts/reg/" class="post-card-link"></a>
+:::
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
 ![](/assets/posts/opt.jpg){.post-icon}
 :::
 

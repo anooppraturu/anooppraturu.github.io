@@ -20,6 +20,21 @@ I'm an AI researcher at [Unlearn.ai](https://www.unlearn.ai/) with a background 
 ::: {.post-card}
 ::: {.columns}
 ::: {.column width="20%"}
+![](/assets/posts/reg.jpeg){.post-icon}
+:::
+
+::: {.column width="80%"}
+#### Regularization
+<span class="post-date">May 3, 2026</span>
+Data Augmentation, Weight Decay, Dropout, Label Smoothing, and Early Stopping.
+:::
+:::
+<a href="/posts/reg/" class="post-card-link"></a>
+:::
+
+::: {.post-card}
+::: {.columns}
+::: {.column width="20%"}
 ![](/assets/posts/opt.jpg){.post-icon}
 :::
 
@@ -32,10 +47,9 @@ Stochastic Gradient Descent, Momentum, RMSProp, and Adam. How to use gradients.
 <a href="/posts/optimizers/" class="post-card-link"></a>
 :::
 
+
 ::: {.post-card}
 ::: {.columns}
-
-
 ::: {.column width="20%"}
 ![](/assets/posts/bp.jpg){.post-icon}
 :::
@@ -43,35 +57,13 @@ Stochastic Gradient Descent, Momentum, RMSProp, and Adam. How to use gradients.
 ::: {.column width="80%"}
 #### Backpropagation
 <span class="post-date">April 11, 2026</span>
-
 The first post in the "Notebook of Things I Don't Know About". A simple rederivation and NumPy implementation of the Backpropagation algorithm for feedforward networks.
 :::
-
 :::
-
 <a href="/posts/backprop/" class="post-card-link"></a>
-
 :::
 
-::: {.post-card}
-::: {.columns}
 
-::: {.column width="20%"}
-![](/assets/posts/mft.jpg){.post-icon}
-:::
-
-::: {.column width="80%"}
-#### The Many Faces of Mean Field Theory
-<span class="post-date">February 4, 2026</span>
-
-Variational principles, field theory, and the physics of the Ising Model.
-:::
-
-:::
-
-<a href="/posts/faces_of_mft/" class="post-card-link"></a>
-
-:::
 
 
 :::
